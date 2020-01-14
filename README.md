@@ -1,0 +1,2 @@
+# symbolBreaker
+STGみたいなもの
