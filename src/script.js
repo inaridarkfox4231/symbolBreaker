@@ -454,6 +454,21 @@ function setup(){
     }
   }
 
+  // 敵を倒すと画面外からbulletが襲ってくる(とりあえず上方)
+  // こわ。かわしてももう一回狙ってくる。まじこわ。
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0.5, y:0.1, shotDirection:-90, collisionFlag:ENEMY,
+    action:{
+      main:[{shotAction:["set", "hideWait"]}, {fire:"trap"}, {shotAction:["clear"]},
+            {shotDirection:["set", 60]}, {shotSpeed:["set", 4]},
+            {fire:""}, {shotDirection:["add", 2]}, {wait:4}, {loop:30, back:3},
+            {fire:""}, {shotDirection:["add", -2]}, {wait:4}, {loop:30, back:3}, {loop:INF, back:6}],
+      hideWait:[{signal:"vanish"}, {direction:["aim", 0]}, {speed:["set", 1]},
+                {speed:["set", 8, 120]}, {direction:["aim", 0]}]
+    },
+    fireDef:{trap:{formation:{type:"frontVertical", distance:64, interval:5, count:96}}}
+  }
+
   // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
 }
@@ -2055,6 +2070,7 @@ function getFormation(param){
       }
       break;
     case "frontVertical":
+      console.log("front");
       // 射出方向に横一列
       for(let i = 0; i < param.count; i++){
         ptnArray.push({x:param.distance, y:(i - (param.count - 1) / 2) * param.interval});
