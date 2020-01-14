@@ -469,6 +469,53 @@ function setup(){
     fireDef:{trap:{formation:{type:"frontVertical", distance:64, interval:5, count:96}}}
   }
 
+  // STAGE1
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0, y:0,
+    action:{
+      main:[{hide:true}, {wait:120},
+            {short:"decorate", color:"red", shape:"squareMiddle"},
+            {shotAction:["set", "leftcurve"]}, {fire:"set", x:0, y:40},
+            {wait:16}, {loop:5, back:2}, {wait:120},
+            {shotAction:["set", "rightcurve"]}, {fire:"set", x:480, y:40},
+            {wait:16}, {loop:5, back:2}, {wait:120},
+            {short:"decorate", color:"orange", shape:"squareMiddle"},
+            {shotAction:["set", "fall"]}, {fire:"set", x:[40, 440], y:-40}, {loop:10, back:1}, {wait:240},
+            {short:"decorate", color:"dkorange", shape:"squareMiddle"},
+            {shotAction:["set", "stayFall"]},
+            {fire:"set", x:[40, 200], y:-40}, {fire:"set", x:[280, 440], y:-40}, {loop:5, back:2}, {wait:120},
+            {shotAction:["set", "whip"]},
+            {short:"decorate", color:"dkred", shape:"squareLarge"},
+            {fire:"set", x:120, y:-40}, {fire:"set", x:360, y:-40}, {wait:120}],
+      leftcurve:[{short:"setV", speed:8, dir:0}, {wait:15}, {short:"curveMove", dirDiff:90}],
+      rightcurve:[{short:"setV", speed:8, dir:180}, {wait:15}, {short:"curveMove", dirDiff:-90}],
+      fall:[{short:"setV", speed:4, dir:90}, {shotSpeed:["set", 6]},
+            {short:"decorate", color:"orange", shape:"wedgeSmall"}, {speed:["set", 1, 30]},
+            {wait:5}, {aim:0}, {fire:""}, {loop:15, back:3},
+            {speed:["set", 4, 30]}, {wait:5}, {aim:0}, {fire:""}, {loop:5, back:3}],
+      stayFall:[{short:"setV", speed:8, dir:90}, {shotSpeed:["set", 3]}, {speed:["set", 0.01, 30]},
+                {short:"decorate", color:"dkorange", shape:"wedgeSmall"},
+                {aim:0}, {fire:"nwayLine", wcount:3, interval:10, lcount:5, upSpeed:0.5}, {wait:40}, {loop:6, back:3},
+                {speed:["set", 2, 240]}, {speed:["set", 8, 60]}],
+      whip:[{short:"setV", speed:6, dir:90}, {shotSpeed:["set", 3]}, {speed:["set", 0.01, 30]},
+              {shotDirection:["set", 60]}, {short:"decorate", color:"dkred", shape:"wedgeSmall"},
+              {fire:""}, {wait:6}, {shotDirection:["add", 4]}, {loop:15, back:3}, {wait:30},
+              {fire:""}, {wait:6}, {shotDirection:["add", -4]}, {loop:15, back:3},
+              {speed:["set", 8, 60]}]
+    },
+    short:{
+      decorate:[{shotColor:"$color"}, {shotShape:"$shape"}],
+      setV:[{speed:["set", "$speed"]}, {direction:["set", "$dir"]}],
+      curveMove:[{shotSpeed:["set", 4]}, {short:"decorate", color:"red", shape:"wedgeSmall"},
+                 {aim:0}, {fire:"nway", count:3, interval:10}, {direction:["add", "$dirDiff", 30]},
+                 {aim:0}, {fire:"nway", count:3, interval:10}, {speed:["set", 12, 30]}]
+    },
+    fireDef:{set:{x:"$x", y:"$y"},
+             nway:{nway:{count:"$count", interval:"$interval"}},
+             nwayLine:{nway:{count:"$wcount", interval:"$interval"}, line:{count:"$lcount", upSpeed:"$upSpeed"}}
+           }
+  }
+
   // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
 }
@@ -612,7 +659,7 @@ function drawConfig(){
 // 第3引数：damageFactor, 第4引数：lifeFactor.
 
 function registUnitColors(){
-  entity.registColor("black", color(0), 1, 1)
+  entity.registColor("black", color(0), 1, 50)
         .registColor("blue", color(63, 72, 204), 1, 1)
         .registColor("dkblue", color(35, 43, 131), 1, 1)
         .registColor("skblue", color(0, 128, 255), 1, 1)
@@ -621,7 +668,7 @@ function registUnitColors(){
         .registColor("plblue", color(125, 133, 221), 1, 1)
         .registColor("red", color(237, 28, 36), 1, 1)
         .registColor("plred", color(247, 153, 157), 1, 1)
-        .registColor("dkred", color(146, 12, 18), 1, 1)
+        .registColor("dkred", color(146, 12, 18), 2, 2)
         .registColor("yellow", color(255, 242, 0), 1, 1)
         .registColor("dkyellow", color(142, 135, 0), 1, 1)
         .registColor("dkgreen", color(17, 91, 39), 1, 1)
@@ -632,14 +679,15 @@ function registUnitColors(){
         .registColor("dkpurple", color(95, 41, 95), 1, 1)
         .registColor("plorange", color(255, 191, 149), 1, 1)
         .registColor("orange", color(255, 127, 39), 1, 1)
-        .registColor("dkorange", color(180, 70, 0), 1, 1)
+        .registColor("dkorange", color(180, 70, 0), 2, 2)
         .registColor("gold", color(128, 128, 0), 1, 1)
         .registColor("dkgrey", color(64), 1, 1)
         .registColor("plgrey", color(200), 1, 1)
         .registColor("grey", color(128), 1, 1)
         .registColor("ltgreen", color(181, 230, 29), 1, 1)
         .registColor("pink", color(255, 55, 120), 1, 1)
-        .registColor("bossBlue", color(57, 86, 125), 1, 50); // ボス用（急遽）。とりあえず500にしといて。
+        .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
+        .registColor("bossRed", color(74, 6, 10), 5, 50); // ボス用のワインレッド（1面のボス）
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -2085,7 +2133,6 @@ function getFormation(param){
       }
       break;
     case "frontVertical":
-      console.log("front");
       // 射出方向に横一列
       for(let i = 0; i < param.count; i++){
         ptnArray.push({x:param.distance, y:(i - (param.count - 1) / 2) * param.interval});
