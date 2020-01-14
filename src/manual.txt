@@ -1,0 +1,23 @@
+マニュアルまとめないと・・・・
+
+bind:親がどうのこうの。
+デフォルト値：false.
+コマンドでtrueにする。trueだと親のvanishFlagがtrueになった場合action実行直前のタイミングで自身の
+vanishFlagがtrueになりそのメソッドを抜ける。つまり死ぬ。
+
+circularBehavior:
+  撃ちだしたユニットの周りを距離を一定に保ちながら周回、あるいはその距離を広げていく感じ。
+ellipserBehavior: 楕円バージョン？？
+半径が小さくなったり大きくなったりするのもやろうと思えばできるのかな
+
+HPとダメージ・・？
+取り合えず全部1とか5にしてみたら？いきなりわかるわけないでしょ・・
+
+collisionFlagまとめ。
+プレイヤーはPLAYER, 発射する弾丸はPLAYER_BULLET, それが分裂した後も全部PLAYER_BULLET.
+ノードユニットは、未指定の場合collisionFlag:OFFでshotCollisionFlag:ENEMY.
+collisionFlagのみ指定されているならそれが何であってもcollisionFlag:ENEMYでshotCollisionFlag:ENEMY_BULLET.
+どちらも指定されているならそれに従う。
+なお、shotCollisionFlagのデフォルトは常にENEMY_BULLETで変えるにはコマンドが必要。
+たとえば普通にENEMYをだせばそのときデフォルトでshotCollisionFlag=ENEMY_BULLETになるから特に指示は必要ない。
+ENEMYがENEMYを出すような特殊な場合には指定が必要で、その結果はcreateFireで作られる関数内で参照される。以上。

@@ -1,0 +1,61 @@
+seedSet.seed0 = {
+  colorName:"dkgrey", shotColorName:"black", bgColor:"grey",
+  x:0.5, y:0.5,
+  action:{
+    main:[{shotSpeed:["set", [3, 6]]}, {shotDirection:["set", [0, 360]]}, {fire:""},
+          {loop:2, back:-1}, {wait:1}, {loop:INF, back:-1}]
+  }
+};
+
+seedSet.seed1 = {
+  colorName:"dkgreen", shotColorName:"green", bgColor:"ltgreen", shotShapeName:"wedgeMiddle",
+  x:0.5, y:0.5, shotSpeed:2,
+  action:{
+    main:[{shotDirection:["set", [0, 360]]}, {fire:"fire"}, {wait:60}, {loop:INF, back:-1}]
+  },
+  fireDef:{fire:{radial:{count:16}, nway:{count:7, interval:2}}}
+};
+
+seedSet.seed2 = {
+  colorName:"red", shotColorName:"orange", bgColor: "plorange",
+  x:0.5, y:0.5, shotSpeed:2,
+  action:{
+    main:[{shotDirection:["add", 2]}, {short:"attack"},
+          {shotDirection:["add", -2]}, {short:"attack"}, {loop:INF, back:-1}]
+  },
+  short:{attack:[{fire:"radial16"}, {wait:4}, {loop:8, back:3}, {wait:16}]},
+  fireDef:{radial16:{radial:{count:16}}}
+};
+
+seedSet.seed3 = {
+  x:0.5, y:0.5, shotSpeed:2*Math.PI, shotDirection:0, shotBehavior:["circle"],
+  action:{
+    main:[{shotAction:["set", "sweep"]}, {fire:"rad2"}, {wait:INF}],
+    sweep:[{hide:true}, {shotSpeed:["set", 2]}, {shotDirection:["add", 12]},
+           {fire:""}, {wait:1}, {loop:INF, back:-2}]
+  },
+  fireDef:{rad2:{formation:{type:"points", p:[[120, 0]]}, bend:90, radial:{count:2}}},
+  behaviorDef:{circle:["circular", {radius:120}]}
+};
+
+seedSet.seed4 = {
+  bgColor:"plgreen",
+  x:0.5, y:0.3, shotSpeed:96*PI/180, shotDirection:90,
+  shotColorName:"plblue", shotShapeName:"squareMiddle",
+  action:{
+    main:[{shotColor:"green"},
+          {shotAction:["set", "cannon1"]}, {shotBehavior:["add", "circle"]}, {fire:"setCannon1"},
+          {shotBehavior:["clear"]}, {shotAction:["set", "cannon2"]}, {shotBehavior:["add", "circleInv"]},
+          {fire:"setCannon2"}, {vanish:1}
+         ],
+    cannon1:[{shotColor:"dkgreen"}, {shotShape:"wedgeSmall"}, {short:"cannonMain"}],
+    cannon2:[{shotColor:"dkgreen"}, {shotShape:"wedgeSmall"}, {wait:48}, {short:"cannonMain"}]
+  },
+  short:{cannonMain:[{shotSpeed:["set", 5]}, {aim:0}, {fire:"line7"}, {wait:4}, {loop:8, back:3},
+                      {wait:64}, {loop:INF, back:5}]},
+  fireDef:{setCannon1:{formation:{type:"points", p:[[48, 0]]}, bend:90},
+           setCannon2:{formation:{type:"points", p:[[48, 0]]}, bend:-90},
+           line7:{line:{count:7, upSpeed:0.3}}},
+  behaviorDef:{circle:["circular", {radius:96, clockwise:true}],
+               circleInv:["circular", {radius:96, clockwise:false}]}
+};
