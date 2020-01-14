@@ -956,10 +956,13 @@ class SelfUnit{
     this.collisionFlag = PLAYER; // 衝突フラグ
     this.shotCollisionFlag = PLAYER_BULLET; // ショットはPLAYER_BULLET.
     this.collider = new CircleCollider();
+    this.size = 20;
+    // life関連
     this.maxLife = 50;
     this.life = this.maxLife;
+    this.healCount = 0;     // ヒールカウントシステム。キー入力の際に+1され、maxに達するとHPが1増える
+    this.maxHealCount = 20; // maxの値
     this.vanishFlag = false;
-    this.size = 20;
     this.prepareWeapon();
 		this.initialize();
 	}
@@ -988,6 +991,8 @@ class SelfUnit{
     // life関連（クラスにした方がいいのかなぁ）
     this.maxLife = 50;
     this.life = this.maxLife;
+    this.healCount = 0; // ヒールカウント
+    this.maxHealCount = 20;
     this.vanishFlag = false;
 	}
 	setPosition(x, y){
@@ -996,11 +1001,21 @@ class SelfUnit{
 	update(){
     if(this.vanishFlag){ return; }
 		this.rotationAngle += this.rotationSpeed;
+    const {x, y} = this.position;
 	  if(keyIsDown(LEFT_ARROW)){ this.position.x -= this.speed; }
 		else if(keyIsDown(RIGHT_ARROW)){ this.position.x += this.speed; }
 		else if(keyIsDown(UP_ARROW)){ this.position.y -= this.speed; }
 		else if(keyIsDown(DOWN_ARROW)){ this.position.y += this.speed; }
     this.inFrame();
+    const {x:newX, y:newY} = this.position;
+    // 位置が更新した時だけhealCountを増やす
+    if(x !== newX || y !== newY){
+      this.healCount++;
+      if(this.healCount === this.maxHealCount){
+        this.lifeUpdate(1);
+        this.healCount = 0;
+      }
+    }
     this.collider.update(this.position.x, this.position.y); // circle限定なので普通にupdate.
 	}
   lifeUpdate(diff){
