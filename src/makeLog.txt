@@ -203,3 +203,6 @@ TODO
 こうすれば面白いんじゃないかと。思っただけ。
 TODO
 テキストはユニット扱いで。collisionFlagをTEXTにして衝突判定しないようにする。で、commandで出せるように・・
+
+hideどうした？？？
+多分、booleanのところ。あの、typeofによる場合分けでbooleanを考慮してないのが原因。

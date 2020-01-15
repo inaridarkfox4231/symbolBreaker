@@ -118,7 +118,7 @@ function setup(){
     },
     fireDef:{set:{x:120, y:0, radial:{count:16}}, way2:{nway:{count:2, interval:120}}},
     behaviorDef:{circ:["circular", {bearing:0.5}]}
-  }
+  };
 
   // FALさんの13を書き直し。バリケード。もう過去には戻れない・・
   seedSet["seed" + (seedCapacity++)] = {
@@ -130,7 +130,7 @@ function setup(){
     },
     fireDef:{set:{x:120, y:0, radial:{count:3}}, rad4:{radial:{count:4}}},
     behaviorDef:{circ:["circular", {bearing:1}]}
-  }
+  };
 
   // FALさんの17書き直し。これで最後。radiusDiffを使うと螺旋軌道を実現できる。
   // 射出方向はその時の親→自分ベクトルに+15または-15したもの。
@@ -152,7 +152,7 @@ function setup(){
     fireDef:{set:{x:50, y:0, radial:{count:2}}},
     behaviorDef:{spiral:["circular", {bearing:1.5, radiusDiff:1}],
                  spiralInv:["circular", {bearing:-1.5, radiusDiff:1}]}
-  }
+  };
 
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
@@ -540,7 +540,7 @@ function setup(){
             {shotAction:["set", "burst"]}, {aim:0}, {fire:"rad5"},
             {shotAction:["clear"]}, {shotSpeed:["set", 6]}, {wait:240}, {loop:INF, back:-10}],
       afterRaid:[{signal:"vanish"}, {direction:["aim", 0]}],
-      soldier:[{signal:"vanish"},
+      soldier:[{hide:true}, {signal:"vanish"}, {hide:false},
                {direction:["aim", 0]}, {speed:["set", 8, 60]}, {wait:60}, {direction:["aim", 0]}],
       calm:[{speed:["set", 2, 30]}],
       burst:[{short:"decorate", color:"bossRed", shape:"wedgeMiddle"}, {speed:["set", 1, 30]},
@@ -564,11 +564,13 @@ function setup(){
     },
   };
 
+  // doubleWedgeの確認
   seedSet["seed" + (seedCapacity++)] = {
     x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4, shotDirection:90,
     shape:"doubleWedgeLarge", color:"dkblue",
     action:{
-      main:[{fire:""}, {wait:4}, {loop:INF, back:2}]
+      main:[{hide:false}, {fire:""}, {wait:8},
+            {hide:true}, {wait:32}, {hide:false}, {wait:32}, {loop:INF, back:-1}]
     }
   }
 
@@ -2731,6 +2733,7 @@ function interpretCommand(data, command, index){
   if(_type === "vanish"){ result.vanishDelay = command.vanish; return result; } // 消えるまでのディレイ
   if(_type === "hide"){
     // 隠れる. trueのとき見えなくする。falseで逆。
+    //console.log(command.hide);
     result.flag = command.hide; return result;
   }
   if(_type === "follow"){
@@ -2768,6 +2771,8 @@ function interpretCommand(data, command, index){
 // たぶん、behaviorにも使えるけどそのためにはaddBehaviorとかしてaddやらなんやらをやめないといけないね。
 
 // dataが配列か、stringか、numberか、オブジェクトか。
+// ごめんなさい、boolean考慮してませんでした・・Oh no. 直したよ。これでうまくいく。
+// なるほど、オブジェクト扱いになってたのか・・どうりで・・・
 function interpretNestedData(data, dict){
   if(typeof(data) !== "string" && data.hasOwnProperty("length")){ // 配列かどうかを見ている
     let result = [];
@@ -2785,6 +2790,8 @@ function interpretNestedData(data, dict){
         return data;
       }
     case "number": // 数字のケース
+      return data;
+    case "boolean": // 真偽値のケース（考慮するの忘れてたごめんなさい！！）
       return data;
     default: // オブジェクトのケース
       let result = {};
@@ -2953,7 +2960,6 @@ function execute(unit, command){
       }
     }else if(command.mode === "pinch"){
       if(unit.parent.life < unit.parent.maxLife * command.limit){
-        console.log("pinch");
         unit.actionIndex++;
         return true; // 親のライフが低くなったらアクションを進める
       }else{
