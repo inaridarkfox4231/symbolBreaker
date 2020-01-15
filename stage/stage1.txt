@@ -29,9 +29,9 @@ STAGE1
 colorName damageFactor lifeFactor
 "red"          1           1
 "orange"       1           1
-"dkred"        3           3
-"dkorange"     3           3
-"brown"        2           2
+"dkred"        2           2
+"dkorange"     2           2
+"brown"        1           1
 "bossRed"      5          50  // カーテンこれでいこう。ダメージ小さすぎると力技で交わされちゃってくそつまんねぇ。
 "black"        1          50
 
