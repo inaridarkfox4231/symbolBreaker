@@ -472,7 +472,7 @@ function setup(){
 
   // STAGE1
   seedSet["seed" + (seedCapacity++)] = {
-    x:0, y:0,
+    x:0, y:0, bgColor:"plred",
     action:{
       main:[{hide:true}, {wait:120},
             {short:"decorate", color:"red", shape:"squareMiddle"},
@@ -532,7 +532,7 @@ function setup(){
             {shotSpeed:["set", 4]}, {shotShape:"wedgeMiddle"},
             {aim:0}, {fire:"nway", count:13, interval:15}, {wait:8},
             {shotSpeed:["set", 8]}, {shotShape:"wedgeSmall"},
-            {aim:0}, {fire:"nway", count:5, interval:8}, {wait:4}, {loop:15, back:2}, {wait:60}, {loop:5, back:12},
+            {aim:0}, {fire:"nway", count:5, interval:8}, {wait:4}, {loop:15, back:3}, {wait:60}, {loop:5, back:12},
             {short:"setV", speed:24, dir:0}, {wait:10},
             {shotAction:["set", "calm"]}, {shotDirection:["set", 90]}, {shotSpeed:["set", 8]},
             {short:"curtain"}, {shotAction:["clear"]},
