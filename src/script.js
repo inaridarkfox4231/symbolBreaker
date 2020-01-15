@@ -50,6 +50,7 @@ const STAR_FACTOR = 2.618033988749895; // 1 + 2 * cos(36).
 // cosとsinの0, 72, 144, 216, 288における値
 const COS_PENTA = [1, 0.30901699437494745, -0.8090169943749473, -0.8090169943749473, 0.30901699437494745];
 const SIN_PENTA = [0, 0.9510565162951535, 0.5877852522924732, -0.587785252292473, -0.9510565162951536];
+const ROOT_THREE_HALF = 0.8660254037844386; // √3/2.
 
 //let testCannon;
 
@@ -404,7 +405,7 @@ function setup(){
              {aim:5}, {fire:"rad8"}, {vanish:1}]
     },
     fireDef:{rad8:{radial:{count:8}}}
-  }
+  };
 
   // 課題2: 自機のsizeの5倍以内に近付いたらaimしてぎゅーん。
   seedSet["seed" + (seedCapacity++)] = {
@@ -414,7 +415,7 @@ function setup(){
             {shotDirection:["add", 10]}, {fire:""}, {wait:32}, {loop:INF, back:3}],
       raid:[{signal:"approach"}, {direction:["aim", 0]}, {speed:["set", 8, 30]}]
     }
-  }
+  };
 
   // 課題3: 敵が、倒れたときに自機狙いを3発発射するやつ。
   // signal:"vanish", follow:trueで自動的に親の位置に移動する。
@@ -432,7 +433,7 @@ function setup(){
             {aim:0}, {fire:""}, {wait:8}, {loop:8, back:3}, {vanish:1}]
     },
     fireDef:{set:{x:"$x", y:"$y", bend:90}}
-  }
+  };
   // 課題4: 壁で3回反射したらそのまま直進して消える。
   seedSet["seed" + (seedCapacity++)] = {
     x:0.5, y:0.2, collisionFlag:ENEMY, shotSpeed:4,
@@ -441,7 +442,7 @@ function setup(){
       ref3:[{signal:"reflect"}, {loop:3, back:1}]
     },
     fireDef:{rad32:{radial:{count:32}}}
-  }
+  };
 
   // ディレイに問題があった（updateからexecuteを切り離した）ので修正。
   seedSet["seed" + (seedCapacity++)] = {
@@ -452,7 +453,7 @@ function setup(){
       scatter:[{shotDirection:["set", 0]}, {fire:""}, {wait:4}, {shotDirection:["add", 10]},
             {loop:36, back:3}]
     }
-  }
+  };
 
   // 敵を倒すと画面外からbulletが襲ってくる(とりあえず上方)
   // こわ。かわしてももう一回狙ってくる。まじこわ。
@@ -467,7 +468,7 @@ function setup(){
                 {speed:["set", 8, 120]}, {direction:["aim", 0]}]
     },
     fireDef:{trap:{formation:{type:"frontVertical", distance:64, interval:5, count:96}}}
-  }
+  };
 
   // STAGE1
   seedSet["seed" + (seedCapacity++)] = {
@@ -489,7 +490,7 @@ function setup(){
             {fire:"set", x:120, y:-40}, {fire:"set", x:360, y:-40}, {wait:360},
             {shotAction:["set", "way3AndTrap"]},
             {fire:"set", x:120, y:-40}, {fire:"set", x:360, y:-40}, {wait:420},
-            {short:"decorate", color:"orange", shape:"squareMiddle"},
+            {short:"decorate", color:"dkorange", shape:"squareLarge"},
             {shotAction:["set", "fall3"]},
             {fire:"set", x:[200, 280], y:-40}, {loop:5, back:1}, {wait:300},
             {short:"decorate", color:"red", shape:"squareMiddle"},
@@ -497,7 +498,7 @@ function setup(){
             {wait:8}, {loop:10, back:2}, {wait:120},
             {shotAction:["set", "leftcurve"]}, {fire:"set", x:0, y:40},
             {wait:8}, {loop:10, back:2}, {wait:360},
-            {short:"decorate", color:"bossRed", shape:"squareLarge"},
+            {short:"decorate", color:"bossRed", shape:"doubleWedgeLarge"},
             {shotAction:["set", "boss"]}, {fire:"set", x:240, y:-80}, {vanish:1}],
       leftcurve:[{short:"setV", speed:8, dir:0}, {wait:15}, {short:"curveMove"}],
       rightcurve:[{short:"setV", speed:8, dir:180}, {wait:15}, {short:"curveMove"}],
@@ -519,24 +520,31 @@ function setup(){
                    {aim:0}, {fire:"nwayLine", wcount:3, interval:10, lcount:13, upSpeed:0.2},
                    {wait:60}, {loop:3, back:3}, {speed:["set", 8, 60]}],
       fall3:[{short:"setV", speed:6, dir:90}, {shotSpeed:["set", 6]}, {shotAction:["set", "afterRaid"]},
-             {short:"decorate", color:"orange", shape:"wedgeSmall"}, {speed:["set", 1, 60]},
+             {short:"decorate", color:"dkorange", shape:"wedgeSmall"}, {speed:["set", 1, 60]},
              {aim:0}, {fire:"nwayLine", wcount:5, interval:20, lcount:20, upSpeed:0.1}, {wait:60},
              {aim:0}, {fire:"nwayLine", wcount:5, interval:20, lcount:20, upSpeed:0.1}, {speed:["set", 8, 30]}],
       boss:[{short:"decorate", color:"bossRed", shape:"wedgeSmall"}, {shotDirection:["set", 90]},
-            {shotAction:["set", "soldier"]}, {fire:"setSoldier"}, {shotSpeed:["set", 6]},
-            {short:"setV", speed:6, dir:90}, {speed:["set", 0, 60]},
+            {shotAction:["set", "soldier"]}, {fire:"setSoldier"}, {shotAction:["clear"]},
+            {shotSpeed:["set", 6]}, {short:"setV", speed:6, dir:90}, {speed:["set", 0, 60]},
             {aim:0}, {fire:"nwayLine", wcount:13, interval:8, lcount:20, upSpeed:0.2},
             {wait:60}, {loop:5, back:3},
+            {wait:60},
+            {shotSpeed:["set", 4]}, {shotShape:"wedgeMiddle"},
+            {aim:0}, {fire:"nway", count:13, interval:15}, {wait:8},
+            {shotSpeed:["set", 8]}, {shotShape:"wedgeSmall"},
+            {aim:0}, {fire:"nway", count:5, interval:8}, {wait:4}, {loop:15, back:2}, {wait:60}, {loop:5, back:12},
             {short:"setV", speed:24, dir:0}, {wait:10},
             {shotAction:["set", "calm"]}, {shotDirection:["set", 90]}, {shotSpeed:["set", 8]},
             {short:"curtain"}, {shotAction:["clear"]},
             {short:"setV", speed:2, dir:180}, {wait:120}, {speed:["set", 0]},
             {shotAction:["set", "burst"]}, {aim:0}, {fire:"rad5"},
-            {shotAction:["clear"]}, {shotSpeed:["set", 6]}, {wait:300}, {loop:INF, back:-10}],
+            {shotAction:["clear"]}, {shotSpeed:["set", 6]}, {wait:240}, {loop:INF, back:-10}],
       afterRaid:[{signal:"vanish"}, {direction:["aim", 0]}],
-      soldier:[{signal:"vanish"}, {direction:["aim", 0]}, {speed:["set", 8, 300]}, {direction:["aim", 0]}],
+      soldier:[{signal:"vanish"},
+               {direction:["aim", 0]}, {speed:["set", 8, 60]}, {wait:60}, {direction:["aim", 0]}],
       calm:[{speed:["set", 2, 30]}],
-      burst:[{speed:["set", 1, 60]}, {fire:"rad5"}, {wait:4}, {loop:25, back:2}, {vanish:1}]
+      burst:[{short:"decorate", color:"bossRed", shape:"wedgeMiddle"}, {speed:["set", 1, 30]},
+             {fire:"rad5"}, {wait:4}, {direction:["add", 3]}, {loop:25, back:3}, {vanish:1}]
     },
     short:{
       decorate:[{shotColor:"$color"}, {shotShape:"$shape"}],
@@ -553,6 +561,14 @@ function setup(){
              nwayLine:{nway:{count:"$wcount", interval:"$interval"}, line:{count:"$lcount", upSpeed:"$upSpeed"}},
              setSoldier:{formation:{type:"frontVertical", distance:40, count:96, interval:5}},
              rad5:{radial:{count:5}}
+    },
+  };
+
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4, shotDirection:90,
+    shape:"doubleWedgeLarge", color:"dkblue",
+    action:{
+      main:[{fire:""}, {wait:4}, {loop:INF, back:2}]
     }
   }
 
@@ -708,7 +724,7 @@ function registUnitColors(){
         .registColor("plblue", color(125, 133, 221), 1, 1)
         .registColor("red", color(237, 28, 36), 1, 1)
         .registColor("plred", color(247, 153, 157), 1, 1)
-        .registColor("dkred", color(146, 12, 18), 2, 2)
+        .registColor("dkred", color(146, 12, 18), 3, 3)
         .registColor("yellow", color(255, 242, 0), 1, 1)
         .registColor("dkyellow", color(142, 135, 0), 1, 1)
         .registColor("dkgreen", color(17, 91, 39), 1, 1)
@@ -735,22 +751,26 @@ function registUnitColors(){
 
 function registUnitShapes(){
   entity.registShape("wedgeSmall", new DrawWedgeShape(6, 3))
-        .registShape("wedgeMiddle", new DrawWedgeShape(9, 4.5))
-        .registShape("wedgeLarge", new DrawWedgeShape(12, 6))
-        .registShape("wedgeHuge", new DrawWedgeShape(24, 12))
+        .registShape("wedgeMiddle", new DrawWedgeShape(12, 6))
+        .registShape("wedgeLarge", new DrawWedgeShape(18, 9))
+        .registShape("wedgeHuge", new DrawWedgeShape(36, 18))
         .registShape("squareSmall", new DrawSquareShape(10))
         .registShape("squareMiddle", new DrawSquareShape(20))
         .registShape("squareLarge", new DrawSquareShape(30))
         .registShape("squareHuge", new DrawSquareShape(60))
         .registShape("starSmall", new DrawStarShape(3))
         .registShape("starMiddle", new DrawStarShape(6))
-        .registShape("starLarge", new DrawStarShape(12))
-        .registShape("starHuge", new DrawStarShape(24))
+        .registShape("starLarge", new DrawStarShape(9))
+        .registShape("starHuge", new DrawStarShape(18))
         .registShape("diaSmall", new DrawDiaShape(8))
         .registShape("rectSmall", new DrawRectShape(6, 4))
-        .registShape("rectMiddle", new DrawRectShape(9, 6))
-        .registShape("rectLarge", new DrawRectShape(12, 8))
-        .registShape("rectHuge", new DrawRectShape(24, 12));
+        .registShape("rectMiddle", new DrawRectShape(12, 8))
+        .registShape("rectLarge", new DrawRectShape(18, 12))
+        .registShape("rectHuge", new DrawRectShape(36, 24))
+        .registShape("doubleWedgeSmall", new DrawDoubleWedgeShape(10))
+        .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
+        .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
+        .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60));
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -1480,7 +1500,7 @@ class DrawShape{
 }
 
 // drawWedge
-// 三角形。(h, b) = (6, 3), (9, 4.5), (12, 6), (24, 12).
+// 三角形。(h, b) = (6, 3), (12, 6), (18, 9), (36, 18).
 // 三角形の高さの中心に(x, y)で, 頂点と底辺に向かってh, 底辺から垂直にb.
 // 当たり判定はsize=(h+b)/2半径の円。戻した。こっちのがくさびっぽいから。
 class DrawWedgeShape extends DrawShape{
@@ -1490,7 +1510,7 @@ class DrawWedgeShape extends DrawShape{
     this.h = h; // 6
     this.b = b; // 3
     this.size = (h + b) / 2;
-    this.damage = 1; // 基礎ダメージ。sizeで変えたい感じ。
+    this.damage = this.size / 4.5; // 基礎ダメージ。1, 2, 3, 6.
   }
   set(unit){
     // colliderInitialize.
@@ -1533,7 +1553,7 @@ class DrawDiaShape extends DrawShape{
 }
 
 // 長方形（指向性のある）
-// (6, 4), (9, 6), (12, 8), (24, 16).
+// (6, 4), (12, 8), (18, 12), (36, 24).
 // 当たり判定はsizeで・・
 // 弾丸にしよかな・・円弧と長方形組み合わせるの。
 class DrawRectShape extends DrawShape{
@@ -1543,7 +1563,7 @@ class DrawRectShape extends DrawShape{
     this.h = h;
     this.w = w;
     this.size = (h + w) / 2;
-    this.damage = 1; // 基礎ダメージ。
+    this.damage = this.h / 4; // 基礎ダメージ。1.5, 3.0, 4.5, 9.0
   }
   set(unit){
     // colliderInitialize.
@@ -1572,7 +1592,7 @@ class DrawSquareShape extends DrawShape{
     super();
     this.colliderType = "circle";
     this.size = size;
-    this.life = 10; // 基礎ライフ。
+    this.life = size / 2; // 基礎ライフ。5, 10, 15, 30
   }
   set(unit){
     // colliderInitialize.
@@ -1589,7 +1609,7 @@ class DrawSquareShape extends DrawShape{
 }
 
 // drawStar. 回転する星型。
-// 3, 6, 12, 24.
+// size:3, 6, 9, 18.
 // 三角形と鋭角四角形を組み合わせてさらに加法定理も駆使したらクソ速くなった。すげー。
 // 当たり判定はsize半径の円（コアの部分）だけど1.5倍の方がいいかもしれない。
 class DrawStarShape extends DrawShape{
@@ -1597,7 +1617,8 @@ class DrawStarShape extends DrawShape{
     super();
     this.colliderType = "circle";
     this.size = size;
-    this.life = 15; // 基礎ライフ。
+    this.life = size * 5; // 基礎ライフ。15, 30, 45, 90.
+    this.damage = size;   // 基礎ダメージ。3, 6, 9, 18.
   }
   set(unit){
     // colliderInitialize.
@@ -1622,6 +1643,33 @@ class DrawStarShape extends DrawShape{
     // u1 u4 v(三角形), u0 u2 v u3(鋭角四角形).
     triangle(u[1][0], u[1][1], u[4][0], u[4][1], v[0], v[1]);
     quad(u[0][0], u[0][1], u[2][0], u[2][1], v[0], v[1], u[3][0], u[3][1]);
+    unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
+  }
+}
+
+// 互いに逆向きのくさび型を組み合わせた形。
+// 回転する。サイズ：10, 20, 30, 60.
+class DrawDoubleWedgeShape extends DrawShape{
+  constructor(size){
+    super();
+    this.colliderType = "circle";
+    this.size = size;
+    this.life = size; // 基礎ライフ：10, 20, 30, 60.
+  }
+  set(unit){
+    // colliderInitialize.
+    unit.collider.update(unit.position.x, unit.position.y, this.size); // 本来の大きさで。
+    unit.drawParam = {rotationAngle:0, rotationSpeed:4};
+  }
+  draw(unit){
+    const {x, y} = unit.position;
+    const direction = unit.drawParam.rotationAngle
+    const c = cos(direction) * this.size;
+    const s = sin(direction) * this.size;
+    quad(x + c, y + s, x - 0.5 * c + ROOT_THREE_HALF * s, y - 0.5 * s - ROOT_THREE_HALF * c,
+             x,     y, x - 0.5 * c - ROOT_THREE_HALF * s, y - 0.5 * s + ROOT_THREE_HALF * c);
+    quad(x - c, y - s, x + 0.5 * c + ROOT_THREE_HALF * s, y + 0.5 * s - ROOT_THREE_HALF * c,
+             x,     y, x + 0.5 * c - ROOT_THREE_HALF * s, y + 0.5 * s + ROOT_THREE_HALF * c);
     unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
   }
 }
@@ -2706,6 +2754,10 @@ function interpretCommand(data, command, index){
       // たとえばvanishによって解除時に親の位置に移動するかどうかを定める。デフォはfalse.
       result.follow = (command.hasOwnProperty("follow") ? command.follow : false);
     }
+    if(result.mode === "pinch"){
+      // pinchはparentのlifeがmaxLife * limitを下回るとコマンドを進めてtrueで返る。
+      result.limit = command.limit;
+    }
     return result;
     // 自機に近付いたら次へ、みたいな場合は数を指定するかも？
   }
@@ -2898,6 +2950,14 @@ function execute(unit, command){
         return true; // ループは抜けない。すすめ。
       }else{
         return false; // なにもしない
+      }
+    }else if(command.mode === "pinch"){
+      if(unit.parent.life < unit.parent.maxLife * command.limit){
+        console.log("pinch");
+        unit.actionIndex++;
+        return true; // 親のライフが低くなったらアクションを進める
+      }else{
+        return false; // まあ、vanishがlimit === 0のケースだからその一般化って感じね・・
       }
     }else if(command.mode === "approach"){
       // 自機のsize*5に近付いたら挙動を進める
