@@ -565,13 +565,18 @@ function setup(){
   };
 
   // doubleWedgeの確認
+  // さらに新しいcircularの実験、割とうまく行ったね。
   seedSet["seed" + (seedCapacity++)] = {
     x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4, shotDirection:90,
     shape:"doubleWedgeLarge", color:"dkblue",
     action:{
-      main:[{hide:false}, {fire:""}, {wait:8},
-            {hide:true}, {wait:32}, {hide:false}, {wait:32}, {loop:INF, back:-1}]
-    }
+      main:[{shotShape:"doubleWedgeMiddle"}, {shotColor:"dkblue"}, {shotCollisionFlag:ENEMY},
+            {shotAction:["set", "guard"]}, {shotSpeed:["set", 8]}, {fire:"rad4"}, {wait:60},
+            {speed:["set", 2]}, {wait:60}, {direction:["mirror", 90]}, {loop:INF, back:2}],
+      guard:[{bind:true}, {speed:["set", 0, 20]}, {behavior:["add", "circ"]}]
+    },
+    fireDef:{rad4:{radial:{count:4}}},
+    behaviorDef:{circ:["circular", {bearing:1}]}
   }
 
   // どうする？？
@@ -1183,6 +1188,7 @@ class SelfUnit{
 class Unit{
   constructor(){
     this.position = createVector();
+    this.previousPosition = createVector(); // 前フレームでの位置
     this.velocity = createVector();
     this.defaultBehavior = [goBehavior, frameOutBehavior]; // デフォルト。固定。
     this.collider = new CircleCollider(); // 最初に1回だけ作って使いまわす。種類が変わるときだけいじる。基本update.
@@ -1192,6 +1198,7 @@ class Unit{
     // vanishの際に呼び出される感じ
     // 動きに関する固有のプロパティ
     this.position.set(0, 0);
+    this.previousPosition.set(0, 0);
     this.velocity.set(0, 0);
     this.speed = 0;
     this.direction = 0;
@@ -1231,6 +1238,11 @@ class Unit{
   }
   setPosition(x, y){
     this.position.set(x, y);
+  }
+  setPreviousPosition(){
+    // 前フレームでの位置を記録しておく
+    const {x, y} = this.position;
+    this.previousPosition.set(x, y);
   }
   setVelocity(speed, direction){
     this.velocity.set(speed * cos(direction), speed * sin(direction));
@@ -1327,6 +1339,8 @@ class Unit{
     if(this.vanishFlag){ return; }
     // delay処理（カウントはexecuteの方で減らす・・分離されてしまっているので。）
     if(this.delay > 0){ return; }
+    // previousPositionをセット
+    this.setPreviousPosition();
     // followがtrueの場合はshotDirectionをいじる
     if(this.follow){ this.shotDirection = this.direction; }
     // behaviorの実行
@@ -2160,27 +2174,29 @@ function brakeAccellBehavior(param){
   }
 }
 
-// ホーミングの仕様を変えたい。徐々に角度がこっちを向くように変化していく、具体的には
-// 1°ずつとか、0.5°ずつとかそんな風に。2°ずつとか。今の仕様だと180°いきなりがちゃん！って感じだから。
-
-// ホーミング。徐々にこちらに方向を揃えてくる。一旦さくじょ。
-
-// レイド（近付くと加速）・・スマートじゃないので一旦さくじょ。
-
 // circular変える。
 // step1:parentの位置との距離を計測 step2:parent→selfの方向を計測 step3:そこにいくつか足す(3とか-2とか)
 // step4:新しい位置が確定するので更新 step5:directionは元の位置→新しい位置. 以上。
 // radiusDiffで半径も変えられるので実質spiralの機能も併せ持つ。
+
+// だめ。動くときとかこれだと失敗する。じゃあどうやって・・・
+// 毎フレーム、parentがいる限り、parentの位置計算より後でおこなわれるので、
+// parentの前フレームでの位置情報さえあれば正確に計算できるはず。
+// これは(↓)parentが動かないことが前提。動くと失敗する。
+// 前フレームに対してこれを使って計算してから変位を足せば正しい位置が得られるはず。
+
+
 function circularBehavior(param){
   // param.bearing:3とか-2とか. radiusDiff: 0.5とか-0.5とか。
   if(!param.hasOwnProperty("radiusDiff")){ param.radiusDiff = 0; }
   return (unit) => {
     const {x, y} = unit.position;
-    const {x:px, y:py} = unit.parent.position;
+    const {x:px, y:py} = unit.parent.previousPosition;
+    const {x:cx, y:cy} = unit.parent.position;
     const r = dist(x, y, px, py);
     const dir = atan2(y - py, x - px);
-    const newX = px + (r + param.radiusDiff) * cos(dir + param.bearing);
-    const newY = py + (r + param.radiusDiff) * sin(dir + param.bearing);
+    const newX = cx + (r + param.radiusDiff) * cos(dir + param.bearing);
+    const newY = cy + (r + param.radiusDiff) * sin(dir + param.bearing);
     unit.direction = atan2(newY - y, newX - x);
     unit.setPosition(newX, newY);
   }
