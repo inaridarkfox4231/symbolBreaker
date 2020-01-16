@@ -577,7 +577,33 @@ function setup(){
     },
     fireDef:{rad4:{radial:{count:4}}},
     behaviorDef:{circ:["circular", {bearing:1}]}
-  }
+  };
+
+  // 楕円軌道で実験したいわね。できたよ。
+  // 親の位置から発射っていうのは実装したところであんま応用効かなさそうね。
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0.5, y:0.2, collisionFlag:ENEMY, color:"dkgrey", bgColor:"plgrey",
+    action:{
+      main:[{shotShape:"squareMiddle"}, {shotColor:"grey"}, {shotCollisionFlag:ENEMY},
+            {short:"enemySet", name:"enemy0"}, {short:"enemySet", name:"enemy1"},
+            {short:"enemySet", name:"enemy2"}, {short:"enemySet", name:"enemy3"},
+            {short:"enemySet", name:"enemy4"}, {short:"enemySet", name:"enemy5"}],
+      enemy0:[{short:"enemyPtn", wait:0, shotColor:"blue"}],
+      enemy1:[{short:"enemyPtn", wait:40, shotColor:"red"}],
+      enemy2:[{short:"enemyPtn", wait:80, shotColor:"yellow"}],
+      enemy3:[{short:"enemyPtn", wait:120, shotColor:"blue"}],
+      enemy4:[{short:"enemyPtn", wait:160, shotColor:"red"}],
+      enemy5:[{short:"enemyPtn", wait:200, shotColor:"yellow"}]
+    },
+    short:{
+      enemySet:[{shotAction:["set", "$name"]}, {fire:"set"}],
+      enemyPtn:[{hide:true}, {wait:"$wait"}, {behavior:["add", "ellipse"]}, {hide:false}, {bind:true},
+                {shotShape:"wedgeMiddle"}, {shotColor:"$shotColor"}, {shotSpeed:["set", 4]},
+                {shotDirection:["fromParent", 0]}, {fire:""}, {wait:2}, {loop:INF, back:3}]
+    },
+    fireDef:{set:{x:180, y:0}},
+    behaviorDef:{ellipse:["circular", {bearing:1.5, ratioXY:0.4}]}
+  };
 
   // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
@@ -2185,22 +2211,26 @@ function brakeAccellBehavior(param){
 // これは(↓)parentが動かないことが前提。動くと失敗する。
 // 前フレームに対してこれを使って計算してから変位を足せば正しい位置が得られるはず。
 
-
+// ratioXYは楕円軌道の縦÷横。たとえば2なら縦長の楕円。
 function circularBehavior(param){
   // param.bearing:3とか-2とか. radiusDiff: 0.5とか-0.5とか。
   if(!param.hasOwnProperty("radiusDiff")){ param.radiusDiff = 0; }
+  if(!param.hasOwnProperty("ratioXY")){ param.ratioXY = 1.0; }
   return (unit) => {
     const {x, y} = unit.position;
     const {x:px, y:py} = unit.parent.previousPosition;
     const {x:cx, y:cy} = unit.parent.position;
-    const r = dist(x, y, px, py);
-    const dir = atan2(y - py, x - px);
+    const dx = x - px;
+    const dy = (y - py) / param.ratioXY;
+    const r = Math.sqrt(dx * dx + dy * dy);
+    const dir = atan2(dy, dx);
     const newX = cx + (r + param.radiusDiff) * cos(dir + param.bearing);
-    const newY = cy + (r + param.radiusDiff) * sin(dir + param.bearing);
+    const newY = cy + (r + param.radiusDiff) * sin(dir + param.bearing) * param.ratioXY;
     unit.direction = atan2(newY - y, newX - x);
     unit.setPosition(newX, newY);
   }
 }
+
 
 // 多彩な曲線
 function curveBehavior(param){
@@ -2773,10 +2803,6 @@ function interpretCommand(data, command, index){
       // たとえばvanishによって解除時に親の位置に移動するかどうかを定める。デフォはfalse.
       result.follow = (command.hasOwnProperty("follow") ? command.follow : false);
     }
-    if(result.mode === "pinch"){
-      // pinchはparentのlifeがmaxLife * limitを下回るとコマンドを進めてtrueで返る。
-      result.limit = command.limit;
-    }
     return result;
     // 自機に近付いたら次へ、みたいな場合は数を指定するかも？
   }
@@ -2973,13 +2999,6 @@ function execute(unit, command){
         return true; // ループは抜けない。すすめ。
       }else{
         return false; // なにもしない
-      }
-    }else if(command.mode === "pinch"){
-      if(unit.parent.life < unit.parent.maxLife * command.limit){
-        unit.actionIndex++;
-        return true; // 親のライフが低くなったらアクションを進める
-      }else{
-        return false; // まあ、vanishがlimit === 0のケースだからその一般化って感じね・・
       }
     }else if(command.mode === "approach"){
       // 自機のsize*5に近付いたら挙動を進める
