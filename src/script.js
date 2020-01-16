@@ -565,7 +565,7 @@ function setup(){
   };
 
   // doubleWedgeの確認
-  // さらに新しいcircularの実験、割とうまく行ったね。
+  // さらに新しいcircularの実験、割とうまく行ったね。移動するユニットの周りの回転軌道。
   seedSet["seed" + (seedCapacity++)] = {
     x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4, shotDirection:90,
     shape:"doubleWedgeLarge", color:"dkblue",
@@ -603,6 +603,21 @@ function setup(){
     },
     fireDef:{set:{x:180, y:0}},
     behaviorDef:{ellipse:["circular", {bearing:1.5, ratioXY:0.4}]}
+  };
+
+  // freeFallBehavior.
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0.5, y:0.3, collisionFlag:ENEMY, shotBehavior:["fall"],
+    shape:"squareLarge", color:"bossBlue", shotShape:"wedgeSmall", shotColor:"bossBlue",
+    action:{
+      main:[{shotAction:["set", "groundRaid"]},
+            {shotDirection:["set", [-120, -60]]}, {shotSpeed:["set", [3, 6]]}, {fire:""},
+            {wait:30}, {loop:INF, back:-2}],
+      groundRaid:[{signal:"ground"}, {behavior:["clear"]},
+                  {shotSpeed:["set", 8]}, {speed:["set", 0]}, {shotColor:"bossBlue"},
+                  {aim:5}, {fire:""}, {wait:2}, {loop:30, back:2}, {vanish:1}]
+    },
+    behaviorDef:{fall:["freeFall", {}]}
   };
 
   // どうする？？
@@ -2231,6 +2246,15 @@ function circularBehavior(param){
   }
 }
 
+// freeFall. gravityに従って自由落下する。
+function freeFallBehavior(param){
+  if(!param.hasOwnProperty("gravity")){ param.gravity = 0.1; } // デフォは0.1
+  return (unit) => {
+    unit.velocity.y += param.gravity;
+    unit.direction = atan2(unit.velocity.y, unit.velocity.x);
+  }
+}
+
 
 // 多彩な曲線
 function curveBehavior(param){
@@ -3021,6 +3045,9 @@ function execute(unit, command){
       }else{
         return false;
       }
+    }else if(command.mode === "ground"){
+      // ground:下端に達したら。roof:上端。right:右端、left:左端。
+      if(unit.position.y > AREA_HEIGHT){ unit.actionIndex++; return true; }else{ return false; }
     }
   }
 }
