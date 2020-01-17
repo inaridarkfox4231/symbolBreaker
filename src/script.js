@@ -34,6 +34,7 @@ let runTimeAverage = 0;
 let runTimeMax = 0;
 let updateTimeAtMax = 0;
 let collisionCheckTimeAtMax = 0;
+let actionTimeAtMax = 0;
 let ejectTimeAtMax = 0;
 let drawTimeAtMax = 0;
 let usingUnitMax = 0;
@@ -633,7 +634,9 @@ function draw(){
   const collisionCheckStart = performance.now();
   entity.collisionCheck(); // 衝突判定
   const collisionCheckEnd = performance.now();
+  const actionStart = performance.now();
   entity.execute(); // 行動
+  const actionEnd = performance.now();
 	const updateEnd = performance.now();
 	const ejectStart = performance.now();
   entity.eject(); // 排除
@@ -644,6 +647,7 @@ function draw(){
   const runEnd = performance.now();
 
 	if(showInfo){ showPerformanceInfo(runEnd - runStart, collisionCheckEnd - collisionCheckStart,
+                                    actionEnd - actionStart,
                                     updateEnd - updateStart, ejectEnd - ejectStart, drawEnd - drawStart); }
   drawConfig();
 }
@@ -651,7 +655,7 @@ function draw(){
 // ---------------------------------------------------------------------------------------- //
 // PerformanceInfomation.
 
-function showPerformanceInfo(runTime, collisionCheckTime, updateTime, ejectTime, drawTime){
+function showPerformanceInfo(runTime, collisionCheckTime, actionTime, updateTime, ejectTime, drawTime){
   let y = 0; // こうすれば新しいデータを挿入しやすくなる。指定しちゃうといろいろとね・・
   // ほんとは紐付けとかしないといけないんだろうけど。
 	fill(entity.infoColor);
@@ -673,6 +677,7 @@ function showPerformanceInfo(runTime, collisionCheckTime, updateTime, ejectTime,
   if(runTimeMax < runTime){
     runTimeMax = runTime;
     collisionCheckTimeAtMax = collisionCheckTime;
+    actionTimeAtMax = actionTime;
     updateTimeAtMax = updateTime;
     ejectTimeAtMax = ejectTime;
     drawTimeAtMax = drawTime;
@@ -683,6 +688,10 @@ function showPerformanceInfo(runTime, collisionCheckTime, updateTime, ejectTime,
   displayRealNumber(updateTimeAtMax, INDENT, y, "--update");
   y += TEXT_INTERVAL;
   displayRealNumber(collisionCheckTimeAtMax, INDENT, y, "----collision");
+  // collisionはエンジン使った方が速いんかな・・あと高速化の工夫がもっと必要なんだろ
+  y += TEXT_INTERVAL;
+  displayRealNumber(actionTimeAtMax, INDENT, y, "----action");
+  // actionはcommand別の内訳が欲しい。
   y += TEXT_INTERVAL;
   displayRealNumber(ejectTimeAtMax, INDENT, y, "--eject");
   y += TEXT_INTERVAL;
