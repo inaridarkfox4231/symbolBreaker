@@ -621,6 +621,16 @@ function setup(){
     behaviorDef:{fall:["freeFall", {}]}
   };
 
+  seedSet["seed" + (seedCapacity++)] = {
+    x:0.5, y:0.1, shotSpeed:2, shotDirection:90,
+    collisionFlag:ENEMY, color:"red", shotColor:"red", shotShape:"laserLarge",
+    action:{
+      main:[{shotAction:["set", "dummy"]}, {fire:"set"}],
+      dummy:[{bind:true}]
+    },
+    fireDef:{set:{x:120, y:0}}
+  }
+
   // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
 }
@@ -827,7 +837,11 @@ function registUnitShapes(){
         .registShape("doubleWedgeSmall", new DrawDoubleWedgeShape(10))
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
-        .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60));
+        .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
+        .registShape("laserSmall", new DrawLaserShape(4))
+        .registShape("laserMiddle", new DrawLaserShape(8))
+        .registShape("laserLarge", new DrawLaserShape(12))
+        .registShape("laserHuge", new DrawLaserShape(24));
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -1100,10 +1114,11 @@ function createParticle(unit){
   entity.particleArray.add(newParticle);
 }
 
-function createSmallParticle(unit){
+// targetは出現位置。unitのposと違う場合があるので。
+function createSmallParticle(unit, target){
   const size = unit.shape.size * 2.0;
   const _color = unit.color;
-  let newParticle = new Particle(unit.position.x, unit.position.y, size, _color, 30, 4, 5);
+  let newParticle = new Particle(target.position.x, target.position.y, size, _color, 30, 4, 5);
   entity.particleArray.add(newParticle);
 }
 
@@ -1333,10 +1348,6 @@ class Unit{
       } // オブジェクト
     })
 
-    // shapeのセッティング忘れてた・・・・・・・できた！
-    // ここでcolliderの初期設定、違うcolliderになる場合は違うものにする。
-    this.shape.set(this);
-
     this.velocityUpdate(); // 速度が決まる場合を考慮する
     if(behavior !== undefined){
       this.behavior = {};
@@ -1353,7 +1364,13 @@ class Unit{
     }
     this.action = ptn.action; // action配列
     // parentの設定(用途様々)
-    if(ptn.parent !== undefined){ this.parent = ptn.parent; }
+    if(ptn.parent !== undefined){
+      this.parent = ptn.parent;
+    }
+    // shapeのセッティング忘れてた・・・・・・・できた！
+    // ここでcolliderの初期設定、違うcolliderになる場合は違うものにする。
+    // laserのセッティングにparentを使うのでこうしないとparentの情報が使えないのね。
+    this.shape.set(this);
     // lifeとdamage
     if(this.collisionFlag === ENEMY_BULLET || this.collisionFlag === PLAYER_BULLET){
       this.damage = calcDamage(this.shape, this.color); // shape:基礎ダメージ、color:倍率
@@ -1400,7 +1417,14 @@ class Unit{
     // defaultBehaviorの実行
     this.defaultBehavior.forEach((behavior) => { behavior(this); })
     // ColliderのUpdate(typeによって分けるけどとりあえずcircleだからね・・)
-    if(this.collider.type == "circle"){ this.collider.update(this.position.x, this.position.y); }
+    if(this.collider.type == "circle"){
+      // サークル
+      this.collider.update(this.position.x, this.position.y);
+    }else if(this.collider.type === "laser"){
+      // レーザー
+      this.collider.update(this.position.x, this.position.y,
+                           this.parent.position.x, this.parent.position.y);
+    }
   }
   lifeUpdate(diff){
     this.life += diff;
@@ -1414,13 +1438,21 @@ class Unit{
       case ENEMY_BULLET:
         //console.log("I'm enemy bullet!");
         // 小さめのパーティクル
-        if(!this.hide){ createSmallParticle(this); }
-        this.vanishFlag = true; break;
+        if(!this.hide){
+          if(this.collider.type === "circle"){ createSmallParticle(this, this); }
+          else{ /* レーザー */ createSmallParticle(this, unit); }
+        }
+        if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
+        break;
       case PLAYER_BULLET:
         //console.log("I'm player bullet!");
         // 小さめのパーティクル
-        if(!this.hide){ createSmallParticle(this); }
-        this.vanishFlag = true; break;
+        if(!this.hide){
+          if(this.collider.type === "circle"){ createSmallParticle(this, this); }
+          else{ /* レーザー */ createSmallParticle(this, unit); }
+        }
+        if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
+        break;
       case ENEMY:
         //console.log("I'm enemy! my life:" + this.life + ", frameCount:" + frameCount);
         // HPを減らして0になるようならvanishさせる。unitからダメージ量を取得する。
@@ -1744,6 +1776,34 @@ class DrawDoubleWedgeShape extends DrawShape{
 // 先端とunit.positionとの距離を指定してコンストラクトする。剣先からなんか出す場合の参考にする。
 
 // レーザーはparent使おうかな
+// size:4, 8, 12, 24.
+class DrawLaserShape extends DrawShape{
+  constructor(size){
+    super();
+    this.colliderType = "laser";
+    this.size = size;
+    this.damage = size * 0.1; // スリップダメージ
+  }
+  set(unit){
+    unit.collider = new LaserCollider();
+    unit.collider.update(unit.position.x, unit.position.y,
+                         unit.parent.position.x, unit.parent.position.y, this.size);
+  }
+  draw(unit){
+    // 四角形でいいよね。
+    const {x, y} = unit.position;
+    const {x:px, y:py} = unit.parent.position;
+    const direction = atan2(y - py, x - px);
+    const dx = cos(direction) * this.size;
+    const dy = sin(direction) * this.size;
+    const fx = dx * 0.1;
+    const fy = dy * 0.1;
+    quad( x - dy,  y + dx,  x - fy,  y + fx,
+         px - fy, py + fx, px - dy, py + dx);
+    quad( x + dy,  y - dx,  x + fy,  y - fx,
+         px + fy, py - fx, px + dy, py - dx);
+  }
+}
 
 // ダメージ計算
 function calcDamage(_shape, _color){
@@ -1933,6 +1993,7 @@ class Collider{
 	}
 }
 
+// circle.
 class CircleCollider extends Collider{
 	constructor(x, y, r){
     super();
@@ -1958,12 +2019,36 @@ class CircleCollider extends Collider{
 	}
 }
 
-class Segment extends Collider{
-  constructor(){
+// laser.
+// 四角形と交わる線分って割り出すのどうやるんよ・・んー。
+// 端点は常に・・横か縦でなければ。
+// (x, y)はレーザーの先端のunitのpositionでpx, pyは作った時のparentのpositionになる。
+// そこから画面内に収まるような2点の位置を計算してx, y, px, pyの値とする感じ・・で、wも設定。
+// めんどくさいな・・rectやめて常に衝突判定に入れるようにした方がよさそう。
+// 要するに、常にすべての判定に使われるようにするってことね。そんな多く配置しなければいけそうな気はする。で、
+// 当たり判定だけきちっと書くみたいな。
+class LaserCollider extends Collider{
+  constructor(x, y, px, py, w){
     super();
-    this.type = "segment";
+    this.type = "laser";
+    this.x = x;
+    this.y = y;
+    this.px = px;
+    this.py = py;
+    this.w = w; // 幅
   }
-  // leftとかtopは端点のminやmaxを・・ただ、画面外に出そうなときは切り詰める感じ。
+  get left(){ return 1; }
+	get right(){ return AREA_WIDTH - 1; }
+	get top(){ return 1; }
+	get bottom(){ return AREA_HEIGHT - 1; }
+  inFrame(){ return true; }
+  update(x, y, px, py, w = -1){
+    this.x = x;
+    this.y = y;
+    this.px = px;
+    this.py = py;
+    if(w > 0){ this.w = w; }
+  }
 }
 
 class CollisionDetector {
@@ -1972,6 +2057,12 @@ class CollisionDetector {
     if(collider1.type == 'circle' && collider2.type == 'circle'){
       return this.detectCircleCollision(collider1, collider2);
     }
+    if(collider1.type == 'circle' && collider2.type == 'laser'){
+      return this.detectCircleAndLaserCollision(collider1, collider2);
+    }
+    if(collider1.type == 'laser' && collider2.type == 'circle'){
+      return this.detectCircleAndLaserCollision(collider2, collider1);
+    }
 		return false;
   }
   // 円形同士
@@ -1979,6 +2070,20 @@ class CollisionDetector {
     const distance = Math.sqrt((circle1.x - circle2.x) ** 2 + (circle1.y - circle2.y) ** 2);
     const sumOfRadius = circle1.r + circle2.r;
     return (distance < sumOfRadius);
+  }
+  detectCircleAndLaserCollision(circle, laser){
+    const {x:cx, y:cy, r} = circle;
+    const {x, y, px, py, w} = laser;
+    // 線分に垂直な範囲にいるかどうか
+    const flag1 = ((px - x) * (cx - x) + (py - y) * (cy - y) > 0);
+    const flag2 = ((x - px) * (cx - px) + (y - py) * (cy - py) > 0);
+    if(flag1 && flag2){
+      // 点と直線の距離の公式
+      const upper = abs((py - y) * (cx - x) - (px - x) * (cy - y));
+      const lower = Math.sqrt((px - x) * (px - x) + (py - y) * (py - y));
+      return (upper / lower) < r + w;
+    }
+    return false;
   }
 }
 
