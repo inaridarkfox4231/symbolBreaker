@@ -29,6 +29,9 @@ const PLAYER = 4;
 let isLoop = true;
 let showInfo = true;
 
+//let laserCheckCount = 0;
+//let checkFlag1 = false;
+
 let runTimeSum = 0;
 let runTimeAverage = 0;
 let runTimeMax = 0;
@@ -621,15 +624,21 @@ function setup(){
     behaviorDef:{fall:["freeFall", {}]}
   };
 
+  // レーザー1
+  // 案の定当たり判定で失敗していますね。わぁい。修正修正！
   seedSet["seed" + (seedCapacity++)] = {
-    x:0.5, y:0.1, shotSpeed:2, shotDirection:90,
-    collisionFlag:ENEMY, color:"red", shotColor:"red", shotShape:"laserLarge",
+    x:0.1, y:0.3,
     action:{
-      main:[{shotAction:["set", "dummy"]}, {fire:"set"}],
-      dummy:[{bind:true}]
+      main:[{hide:true}, {shotAction:["set", "enemy1"]},
+            {shotColor:"dkred"}, {shotShape:"doubleWedgeLarge"}, {fire:"set", x:120, y:0}],
+      enemy1:[{shotShape:"laserSmall"}, {shotSpeed:["set", 12]}, {shotColor:"dkred"}, {shotAction:["set", "calm"]},
+              {speed:["set", 1]},
+              {aim:0}, {fire:""}, {wait:240}, {direction:["mirror", 90]}, {loop:INF, back:4}],
+      calm:[{bind:true}, {speed:["set", 1, 60]}, {wait:120}, {vanish:1}]
     },
-    fireDef:{set:{x:120, y:0}}
-  }
+    fireDef:{set:{x:"$x", y:"$y"}}
+  };
+
 
   // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
@@ -838,10 +847,10 @@ function registUnitShapes(){
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
         .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
-        .registShape("laserSmall", new DrawLaserShape(4))
-        .registShape("laserMiddle", new DrawLaserShape(8))
-        .registShape("laserLarge", new DrawLaserShape(12))
-        .registShape("laserHuge", new DrawLaserShape(24));
+        .registShape("laserSmall", new DrawLaserShape(10))
+        .registShape("laserMiddle", new DrawLaserShape(20))
+        .registShape("laserLarge", new DrawLaserShape(30))
+        .registShape("laserHuge", new DrawLaserShape(60));
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -984,21 +993,21 @@ class System{
     const cellColliderCahce = new Array(length); // globalColliderのためのキャッシュ。
     if(length > 0){ cellColliderCahce[0] = cell[0].collider; }
 
-    let enemyOrPlayerExist = false;
+    //let enemyOrPlayerExist = false;
     // キャッシュを作る必要があるのでi=0のループだけは回さないといけない。
     // とりあえずenemyもplayerもいない場合は判定しないようにしました。item作る場合、それも考慮しなきゃ・・
 
     for(let i = 0; i < length - 1; i++){
-      if(i > 0 && !enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
+      //if(i > 0 && !enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
       const obj1 = cell[i];
-      if(obj1.collisionFlag === PLAYER || obj1.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
+      //if(obj1.collisionFlag === PLAYER || obj1.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
       const collider1  = cellColliderCahce[i]; // キャッシュから取ってくる。
       for(let j = i + 1; j < length; j++){
         // i=0に対してjが全部動く。それで出尽くすので、その時点で、
         // 1.enemyもplayerもいなければbreak;
         // 2.enemyやplayerがいるとして、collisionFlagが1種類ならbreak; を追加する。
         const obj2 = cell[j];
-        if(obj2.collisionFlag === PLAYER || obj2.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
+        //if(obj2.collisionFlag === PLAYER || obj2.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
 
         // キャッシュから取ってくる。
         // ループ初回は直接取得してキャッシュに入れる。
@@ -1012,7 +1021,7 @@ class System{
         // Cahceへの代入までスルーしちゃうとまずいみたい
         // ここでobj1, obj2のcollisionFlagでバリデーションかけてfalseならcontinue.
         if(!this.validation(obj1.collisionFlag, obj2.collisionFlag)){ continue; }
-
+        //if(collider1.type === "laser" || collider2.type === "laser"){ laserCheckCount++; }
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
@@ -1028,7 +1037,11 @@ class System{
     // 衝突オブジェクトリストと。
     const objLength = objList.length;
     const cellLength = cell.length;
-
+/*
+    レーザーのおかしな挙動の原因はこれ。
+    これ、親のでかいobjListとの判定なんだけど、そっちにbullet系が入っててもダメになっちゃうの。
+    親にbulletだけ（つまりレーザー）でcellにプレイヤー、そういうときでも✕、多分cellに両方入ってる時だけ
+    とかになっちゃってたっぽいね。はい。やめた。OK!
     if(!enemyOrPlayerExist){
       // cellの中にenemyやplayerがいるならそのまま実行、いない場合はこのフラグがfalseなので、
       // 引き続きfalseなのかどうかを見るためobjListを走査する。
@@ -1037,10 +1050,10 @@ class System{
         if(f === ENEMY || f === PLAYER){ enemyOrPlayerExist = true; break; }
       }
     }
-
+*/
     // これはもう最初に一通りobjListとcellをさらってplayerもenemyもいなければそのままスルー・・
     for(let i = 0; i < objLength; i++) {
-      if(!enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
+      //if(!enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
       const obj = objList[i];
       const collider1 = obj.collider; // 直接取得する。
       for(let j = 0; j < cellLength; j++) {
@@ -1050,6 +1063,7 @@ class System{
         if(!this.validation(obj.collisionFlag, cellObj.collisionFlag)){ continue; }
 
         const collider2 = cellColliderCahce[j]; // キャッシュから取ってくる。
+        //if(collider1.type === "laser" || collider2.type === "laser"){ laserCheckCount++; }
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
