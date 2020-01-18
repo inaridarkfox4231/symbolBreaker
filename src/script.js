@@ -626,6 +626,8 @@ function setup(){
   // 修正した。出来たけどなんか迫力ないな・・つまんね・・
   // これ自機が出せるようにできない？スペースキー押してる時間で太さが変わるの・・
   // ・・・・シュプールかよ！
+  // もうちょっと挙動をよくするには、ヘッドに「画面外に出たら静止」、テールに「画面外に出たら消滅」を命令すればいい。
+  // 自機が放つ場合にそれを適用したらいいかも。やばい・・パソコン・・
   seedSet["seed" + (seedCapacity++)] = {
     x:0.2, y:0.1, collisionFlag:ENEMY, shotSpeed:4, speed:4.8,
     color:"bossBlue", shape:"squareLarge", shotShape:"wedgeMiddle", shotColor:"dkblue",
