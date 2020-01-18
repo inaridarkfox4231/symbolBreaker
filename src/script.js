@@ -844,10 +844,10 @@ function registUnitShapes(){
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
         .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
-        .registShape("laserSmall", new DrawLaserShape(10))
-        .registShape("laserMiddle", new DrawLaserShape(20))
-        .registShape("laserLarge", new DrawLaserShape(30))
-        .registShape("laserHuge", new DrawLaserShape(60));
+        .registShape("laserSmall", new DrawLaserShape(5))
+        .registShape("laserMiddle", new DrawLaserShape(10))
+        .registShape("laserLarge", new DrawLaserShape(15))
+        .registShape("laserHuge", new DrawLaserShape(30));
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -990,21 +990,11 @@ class System{
     const cellColliderCahce = new Array(length); // globalColliderのためのキャッシュ。
     if(length > 0){ cellColliderCahce[0] = cell[0].collider; }
 
-    //let enemyOrPlayerExist = false;
-    // キャッシュを作る必要があるのでi=0のループだけは回さないといけない。
-    // とりあえずenemyもplayerもいない場合は判定しないようにしました。item作る場合、それも考慮しなきゃ・・
-
     for(let i = 0; i < length - 1; i++){
-      //if(i > 0 && !enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
       const obj1 = cell[i];
-      //if(obj1.collisionFlag === PLAYER || obj1.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
       const collider1  = cellColliderCahce[i]; // キャッシュから取ってくる。
       for(let j = i + 1; j < length; j++){
-        // i=0に対してjが全部動く。それで出尽くすので、その時点で、
-        // 1.enemyもplayerもいなければbreak;
-        // 2.enemyやplayerがいるとして、collisionFlagが1種類ならbreak; を追加する。
         const obj2 = cell[j];
-        //if(obj2.collisionFlag === PLAYER || obj2.collisionFlag === ENEMY){ enemyOrPlayerExist = true; }
 
         // キャッシュから取ってくる。
         // ループ初回は直接取得してキャッシュに入れる。
@@ -1018,7 +1008,6 @@ class System{
         // Cahceへの代入までスルーしちゃうとまずいみたい
         // ここでobj1, obj2のcollisionFlagでバリデーションかけてfalseならcontinue.
         if(!this.validation(obj1.collisionFlag, obj2.collisionFlag)){ continue; }
-        //if(collider1.type === "laser" || collider2.type === "laser"){ laserCheckCount++; }
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
@@ -1034,23 +1023,9 @@ class System{
     // 衝突オブジェクトリストと。
     const objLength = objList.length;
     const cellLength = cell.length;
-/*
-    レーザーのおかしな挙動の原因はこれ。
-    これ、親のでかいobjListとの判定なんだけど、そっちにbullet系が入っててもダメになっちゃうの。
-    親にbulletだけ（つまりレーザー）でcellにプレイヤー、そういうときでも✕、多分cellに両方入ってる時だけ
-    とかになっちゃってたっぽいね。はい。やめた。OK!
-    if(!enemyOrPlayerExist){
-      // cellの中にenemyやplayerがいるならそのまま実行、いない場合はこのフラグがfalseなので、
-      // 引き続きfalseなのかどうかを見るためobjListを走査する。
-      for(let j = 0; j < objLength; j++){
-        const f = objList[j].collisionFlag;
-        if(f === ENEMY || f === PLAYER){ enemyOrPlayerExist = true; break; }
-      }
-    }
-*/
+
     // これはもう最初に一通りobjListとcellをさらってplayerもenemyもいなければそのままスルー・・
     for(let i = 0; i < objLength; i++) {
-      //if(!enemyOrPlayerExist){ break; } // enemyもplayerもいなければ何もしない
       const obj = objList[i];
       const collider1 = obj.collider; // 直接取得する。
       for(let j = 0; j < cellLength; j++) {
@@ -1060,7 +1035,6 @@ class System{
         if(!this.validation(obj.collisionFlag, cellObj.collisionFlag)){ continue; }
 
         const collider2 = cellColliderCahce[j]; // キャッシュから取ってくる。
-        //if(collider1.type === "laser" || collider2.type === "laser"){ laserCheckCount++; }
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
@@ -1178,7 +1152,7 @@ class SelfUnit{
     this.shotShape = entity.drawShape["wedgeSmall"];
     this.shotDelay = 0;
     // collider.
-    this.collider.update(this.position.x, this.position.y, 5, 5);
+    this.collider.update(this.position.x, this.position.y, 5);
     // life関連（クラスにした方がいいのかなぁ）
     this.maxLife = 50;
     this.life = this.maxLife;
@@ -1787,13 +1761,13 @@ class DrawDoubleWedgeShape extends DrawShape{
 // 先端とunit.positionとの距離を指定してコンストラクトする。剣先からなんか出す場合の参考にする。
 
 // レーザーはparent使おうかな
-// size:4, 8, 12, 24.
+// size:5, 10, 15, 30.
 class DrawLaserShape extends DrawShape{
   constructor(size){
     super();
     this.colliderType = "laser";
     this.size = size;
-    this.damage = size * 0.1; // スリップダメージ
+    this.damage = size * 0.2; // スリップダメージ
   }
   set(unit){
     unit.collider = new LaserCollider();
@@ -2008,6 +1982,12 @@ class Collider{
 Collider.index = 0;
 
 // circle.
+// 今のinFrameの仕様だと端っこにいるときによけられてしまう、これは大きくなるとおそらく無視できないので、
+// レクトと画面との共通を取った方がよさそう。その理屈で行くとプレイヤーが端っこにいるときにダメージ受けないはずだが、
+// プレイヤーは毎フレーム放り込んでたので問題が生じなかったのでした。
+// たとえば今の場合、敵が体の半分しか出てない時に倒せない。
+// leftとtopは0とMAX取る。これらは<AREA_WIDTHかつ<AREA_HEIGHTでないといけない。
+// rightとbottomはそれぞれw-1とh-1でMIN取る。これらは>0でないといけない。
 class CircleCollider extends Collider{
 	constructor(x, y, r){
     super();
@@ -2016,14 +1996,14 @@ class CircleCollider extends Collider{
 		this.y = y;
 		this.r = r;
 	}
-	get left(){ return this.x - this.r; }
-	get right(){ return this.x + this.r; }
-	get top(){ return this.y - this.r; }
-	get bottom(){ return this.y + this.r; }
+	get left(){ return Math.max(0, this.x - this.r); }
+	get right(){ return Math.min(AREA_WIDTH - 1, this.x + this.r); }
+	get top(){ return Math.max(0, this.y - this.r); }
+	get bottom(){ return Math.min(AREA_HEIGHT - 1, this.y + this.r); }
   inFrame(){
     // trueを返さなければTreeには入れない。
-    const flag1 = (this.x - this.r > 0 && this.x + this.r < AREA_WIDTH);
-    const flag2 = (this.y - this.r > 0 && this.y + this.r < AREA_HEIGHT);
+    const flag1 = (this.left < AREA_WIDTH && this.top < AREA_HEIGHT);
+    const flag2 = (this.right > 0 && this.bottom > 0);
     return flag1 && flag2;
   }
 	update(x, y, r = -1){
@@ -2038,9 +2018,8 @@ class CircleCollider extends Collider{
 // 端点は常に・・横か縦でなければ。
 // (x, y)はレーザーの先端のunitのpositionでpx, pyは作った時のparentのpositionになる。
 // そこから画面内に収まるような2点の位置を計算してx, y, px, pyの値とする感じ・・で、wも設定。
-// めんどくさいな・・rectやめて常に衝突判定に入れるようにした方がよさそう。
-// 要するに、常にすべての判定に使われるようにするってことね。そんな多く配置しなければいけそうな気はする。で、
-// 当たり判定だけきちっと書くみたいな。
+// inFrameやめようと思ったけど、端点が作るマージンwの長方形との交わりくらいは取ってもいいでしょ。
+// left:x-wと0のmax,top:y-wと0のmax,right:x+wとAREA_WIDTH-1のmin,bottom:y+wとAREA_HEIGHT-1のmin.
 class LaserCollider extends Collider{
   constructor(x, y, px, py, w){
     super();
@@ -2054,11 +2033,15 @@ class LaserCollider extends Collider{
     // 毎回衝突判定の前に空っぽにして、衝突の度にそれを放り込んで照合し既に入ってたらスルー。
     this.hitIndexList = [];
   }
-  get left(){ return 1; }
-	get right(){ return AREA_WIDTH - 1; }
-	get top(){ return 1; }
-	get bottom(){ return AREA_HEIGHT - 1; }
-  inFrame(){ return true; }
+  get left(){ return Math.max(0, Math.min(this.x - this.w, this.px - this.w)); }
+	get right(){ return Math.min(AREA_WIDTH - 1, Math.max(this.x + this.w, this.px + this.w)); }
+	get top(){ return Math.max(0, Math.min(this.y - this.w, this.py - this.w)); }
+	get bottom(){ return Math.min(AREA_HEIGHT - 1, Math.max(this.y + this.w, this.py + this.w)); }
+  inFrame(){
+    const flag1 = (this.left < AREA_WIDTH && this.top < AREA_HEIGHT);
+    const flag2 = (this.right > 0 && this.bottom > 0);
+    return flag1 && flag2;
+  }
   update(x, y, px, py, w = -1){
     this.x = x;
     this.y = y;
