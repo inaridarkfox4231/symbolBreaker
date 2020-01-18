@@ -623,17 +623,21 @@ function setup(){
 
   // レーザー1
   // 案の定当たり判定で失敗していますね。わぁい。修正修正！
+  // 修正した。出来たけどなんか迫力ないな・・つまんね・・
+  // これ自機が出せるようにできない？スペースキー押してる時間で太さが変わるの・・
+  // ・・・・シュプールかよ！
   seedSet["seed" + (seedCapacity++)] = {
-    x:0.1, y:0.3,
+    x:0.2, y:0.1, collisionFlag:ENEMY, shotSpeed:4, speed:4.8,
+    color:"bossBlue", shape:"squareLarge", shotShape:"wedgeMiddle", shotColor:"dkblue",
     action:{
-      main:[{hide:true}, {shotAction:["set", "enemy1"]},
-            {shotColor:"dkred"}, {shotShape:"doubleWedgeLarge"}, {fire:"set", x:120, y:0}],
-      enemy1:[{shotShape:"laserSmall"}, {shotSpeed:["set", 12]}, {shotColor:"dkred"}, {shotAction:["set", "calm"]},
-              {speed:["set", 1]},
-              {aim:0}, {fire:""}, {wait:240}, {direction:["mirror", 90]}, {loop:INF, back:4}],
-      calm:[{bind:true}, {speed:["set", 1, 60]}, {wait:120}, {vanish:1}]
+      main:[{shotAction:["set", "laserUnit"]}, {aim:0}, {fire:"way", count:3}, {wait:36},
+            {shotAction:["clear"]}, {aim:0}, {fire:"way", count:9}, {wait:8}, {loop:3, back:3},
+            {direction:["mirror", 90]}, {loop:INF, back:-1}],
+      laserUnit:[{hide:true}, {shotSpeed:["set", 12]}, {shotDirection:["rel", 0]},
+                 {shotShape:"laserSmall"}, {shotColor:"bossBlue"}, {shotAction:["set", "calm"]}, {fire:""}],
+      calm:[{speed:["set", 4, 60]}]
     },
-    fireDef:{set:{x:"$x", y:"$y"}}
+    fireDef:{way:{nway:{count:"$count", interval:20}}}
   };
 
 
