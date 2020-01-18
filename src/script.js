@@ -29,9 +29,6 @@ const PLAYER = 4;
 let isLoop = true;
 let showInfo = true;
 
-//let laserCheckCount = 0;
-//let checkFlag1 = false;
-
 let runTimeSum = 0;
 let runTimeAverage = 0;
 let runTimeMax = 0;
@@ -2004,8 +2001,11 @@ class LinearQuadTreeSpace {
 class Collider{
 	constructor(){
 		this.type = "";
+    this.index = Collider.index++;
 	}
 }
+
+Collider.index = 0;
 
 // circle.
 class CircleCollider extends Collider{
@@ -2050,6 +2050,9 @@ class LaserCollider extends Collider{
     this.px = px;
     this.py = py;
     this.w = w; // 幅
+    // laserは衝突しても消えないので、フレームごとに衝突したcolliderのindexを覚えておく必要がある。
+    // 毎回衝突判定の前に空っぽにして、衝突の度にそれを放り込んで照合し既に入ってたらスルー。
+    this.hitIndexList = [];
   }
   get left(){ return 1; }
 	get right(){ return AREA_WIDTH - 1; }
@@ -2062,6 +2065,21 @@ class LaserCollider extends Collider{
     this.px = px;
     this.py = py;
     if(w > 0){ this.w = w; }
+    this.hitIndexList = []; // 当たったcolliderのindexを放り込む
+  }
+  registIndex(index){
+    this.hitIndexList.push(index);
+  }
+  hasIndex(index){
+    // forEach内でreturnを使っても関数を抜けることは出来ません（重要）
+    // ループ処理の中で関数を終えるときは必ずfor文にしましょう！forEachやめろ！
+    for(let i = 0; i < this.hitIndexList.length; i++){
+      const havingIndex = this.hitIndexList[i];
+      if(index === havingIndex){
+        return true;
+      }
+    }
+    return false;
   }
 }
 
@@ -2086,6 +2104,8 @@ class CollisionDetector {
     return (distance < sumOfRadius);
   }
   detectCircleAndLaserCollision(circle, laser){
+    // laserのあれにcircleのindexがもう入ってるときは判定しない
+    if(laser.hasIndex(circle.index)){ return false; }
     const {x:cx, y:cy, r} = circle;
     const {x, y, px, py, w} = laser;
     // 線分に垂直な範囲にいるかどうか
@@ -2095,7 +2115,9 @@ class CollisionDetector {
       // 点と直線の距離の公式
       const upper = abs((py - y) * (cx - x) - (px - x) * (cy - y));
       const lower = Math.sqrt((px - x) * (px - x) + (py - y) * (py - y));
-      return (upper / lower) < r + w;
+      const collide = ((upper / lower) < r + w);
+      if(collide){ laser.registIndex(circle.index); } // 衝突した場合にそのindexを登録。
+      return collide;
     }
     return false;
   }
