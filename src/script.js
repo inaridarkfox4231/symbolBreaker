@@ -628,6 +628,8 @@ function setup(){
   // ・・・・シュプールかよ！
   // もうちょっと挙動をよくするには、ヘッドに「画面外に出たら静止」、テールに「画面外に出たら消滅」を命令すればいい。
   // 自機が放つ場合にそれを適用したらいいかも。やばい・・パソコン・・
+  // frameOutのsignal使って、ヘッドは画面外で速さ0.1, テールは画面外で消滅するようにした。
+  // さらにbindで親が（テールが）消えたら同時に消えるようにした。完璧。
   seedSet["seed" + (seedCapacity++)] = {
     x:0.2, y:0.1, collisionFlag:ENEMY, shotSpeed:4, speed:4.8,
     color:"bossBlue", shape:"squareLarge", shotShape:"wedgeMiddle", shotColor:"dkblue",
@@ -636,8 +638,9 @@ function setup(){
             {shotAction:["clear"]}, {aim:0}, {fire:"way", count:9}, {wait:8}, {loop:3, back:3},
             {direction:["mirror", 90]}, {loop:INF, back:-1}],
       laserUnit:[{hide:true}, {shotSpeed:["set", 12]}, {shotDirection:["rel", 0]},
-                 {shotShape:"laserSmall"}, {shotColor:"bossBlue"}, {shotAction:["set", "calm"]}, {fire:""}],
-      calm:[{speed:["set", 4, 60]}]
+                 {shotShape:"laserSmall"}, {shotColor:"bossBlue"}, {shotAction:["set", "calm"]},
+                 {fire:""}, {signal:"frameOut"}, {vanish:1}],
+      calm:[{bind:true}, {speed:["set", 4, 60]}, {signal:"frameOut"}, {speed:["set", 0.1]}]
     },
     fireDef:{way:{nway:{count:"$count", interval:20}}}
   };
@@ -3187,6 +3190,14 @@ function execute(unit, command){
     }else if(command.mode === "ground"){
       // ground:下端に達したら。roof:上端。right:右端、left:左端。
       if(unit.position.y > AREA_HEIGHT){ unit.actionIndex++; return true; }else{ return false; }
+    }else if(command.mode === "frameOut"){
+      // frameOut:画面外に出たら。
+      const {x, y} = unit.position;
+      if(y < 0 || y > AREA_HEIGHT || x < 0 || x > AREA_WIDTH){
+        unit.actionIndex++; return true;
+      }else{
+        return false;
+      }
     }
   }
 }
