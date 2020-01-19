@@ -1144,12 +1144,24 @@ class SelfUnit{
     // ここ改良したいわね・・ていうか自身のshotActionとかshotShapeとかも同時に切り替わるようにできないかな。
     // つまり用意すべきはSeedのようなものであって、fireの単純なメソッドではない・・と。
     // レーザー撃ちたいんだよう。
+    // x, yはあとで自分のを追加する。
+    /*
+    let mySeed0 = {
+      speed:4, shotSpeed:8, shotDirection:-90, shotShape:"wedgeSmall", shotColor:"black", color:"black",
+      action:{
+        main:[{fire:"set4"}, {wait:8}]
+      },
+      fireDef:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}
+    };
+    mySeed0.x = this.position.x;
+    mySeed0.y = this.position.y;
+    */
     let weaponSeed0 = {formation:{type:"frontVertical", count:4, distance:15, interval:15}};
     this.weapon.push(createFirePattern(weaponSeed0));
     this.fire = this.weapon[0];
   }
 	initialize(){
-		this.position.set(AREA_WIDTH * 0.5, AREA_HEIGHT * 0.875);
+		this.position.set(AREA_WIDTH * 0.5, AREA_HEIGHT * 0.875); // プレイヤーの位置を決めてるところ
 		this.speed = 4;
 		this.rotationAngle = 0;
 		this.rotationSpeed = -2;
@@ -1169,7 +1181,7 @@ class SelfUnit{
     this.maxLife = 50;
     this.life = this.maxLife;
     this.healCount = 0; // ヒールカウント
-    this.maxHealCount = 20;
+    this.maxHealCount = 20; // 20回移動するたびにHPが1回復する
     this.vanishFlag = false;
 	}
 	setPosition(x, y){
@@ -1253,6 +1265,7 @@ class Unit{
     this.previousPosition = createVector(); // 前フレームでの位置
     this.velocity = createVector();
     this.defaultBehavior = [goBehavior, frameOutBehavior]; // デフォルト。固定。
+    this.counter = new LoopCounter(); // クラス化. loopの制御はこれ以降このコンポジットに一任する。
     this.collider = new CircleCollider(); // 最初に1回だけ作って使いまわす。種類が変わるときだけいじる。基本update.
     this.initialize();
   }
@@ -1268,8 +1281,9 @@ class Unit{
     this.behavior = {}; // オブジェクトにし、各valueを実行する形とする。
     this.action = []; // 各々の行動はcommandと呼ばれる（今までセグメントと呼んでいたもの）
     this.actionIndex = 0; // 処理中のcommandのインデックス
-    this.loopCounter = []; // loopCounterIndex === lengthの際に0をpushするように仕向ける。
-    this.loopCounterIndex = 0; // 処理中のloopCounterのインデックス
+
+    this.counter.initialize();
+
     // 親の情報（bearingや親がやられたときの発動など用途様々）
     this.parent = undefined; // 自分を生み出したunitに関する情報。ノードでなければ何かしら設定される。
     // bulletを生成する際に使うプロパティ
@@ -1485,34 +1499,6 @@ class Unit{
     // カウントの進行
     this.properFrameCount++;
   }
-  getLoopCount(){
-    // ループ内で何かしら処理するときに使う。基本0, 1, 2, ..., limit-1の値が使われる。
-    // カウントを増やす前に使われるってこと。
-    // 必要なら0を追加する処理はこっちにも書く（使われない場合もあるけどね）
-    if(this.loopCounterIndex === this.loopCounter.length){ this.loopCounter.push(0); }
-    return this.loopCounter[this.loopCounterIndex];
-  }
-  loopCheck(limit){
-    // 該当するloopCounterを増やしてlimitに達するならインデックスを先に進める。
-    if(this.loopCounterIndex === this.loopCounter.length){ this.loopCounter.push(0); }
-    this.loopCounter[this.loopCounterIndex]++;
-    if(this.loopCounter[this.loopCounterIndex] < limit){ return false; }
-    this.loopCounterIndex++; // loopCounterのインデックスはlimitに達した場合だけ増やす。
-    return true;
-  }
-  loopBack(back){
-    // actionIndexをback回だけ戻す。countプロパティを持つcommandにさしかかるたびに
-    // loopCounterIndexを1つ戻してそこを0に置き換える。
-    // countプロパティを持つコマンドは滞留コマンド(stay)と呼ばれる。（名前つけたかっただけ）
-    for(let i = 1; i <= back; i++){
-      const command = this.action[this.actionIndex - i];
-      if(command.hasOwnProperty("count")){
-        this.loopCounterIndex--;
-        this.loopCounter[this.loopCounterIndex] = 0;
-      }
-    }
-    this.actionIndex -= back; // 戻すのは最後。コードの可読性を上げるため。
-  }
   draw(){
     if(this.hide || this.vanishFlag){ return; } // hide === trueのとき描画しない
     //this.drawModule.draw(this);
@@ -1522,6 +1508,47 @@ class Unit{
       const l = this.life * this.shape.size * 2 / this.maxLife;
       rect(this.position.x - l / 2, this.position.y + this.shape.size * 1.5, l, 5);
     }
+  }
+}
+
+// ---------------------------------------------------------------------------------------- //
+// loopCounter. ループのcommandについて。
+
+class LoopCounter extends Array{
+  constructor(){
+    super();
+    this.initialize();
+  }
+  initialize(){
+    this.length = 0;
+    this.currentIndex = 0;
+  }
+  getLoopCount(){
+    // そのときのloopCountを取得する。0～limit-1が返る想定。
+    if(this.currentIndex === this.length){ this.push(0); }
+    return this[this.currentIndex];
+  }
+  loopCheck(limit){
+    // countを増やす。limitに達しなければfalseを返す。達するならcountを進める。
+    if(this.currentIndex === this.length){ this.push(0); }
+    this[this.currentIndex]++;
+    if(this[this.currentIndex] < limit){ return false; }
+    // limitに達した場合はindexを増やす。
+    this.currentIndex++;
+    return true;
+  }
+  loopBack(unit, back){
+    // unitのactionIndexをbackだけ戻す。その間にcountプロパティをもつcommandがあったら
+    // そのたびにcurrentIndexを1減らしてそこの値を0にならす。
+    let {action, actionIndex} = unit;
+    for(let i = 1; i <= back; i++){
+      const currentCommand = action[actionIndex - i];
+      if(currentCommand.hasOwnProperty("count")){
+        this.currentIndex--;
+        this[this.currentIndex] = 0;
+      }
+    }
+    unit.actionIndex -= back; // 最後にまとめて戻す
   }
 }
 
@@ -3028,11 +3055,11 @@ function execute(unit, command){
     // ある場合はアレがtrueを返せば増やす。
     const newParameter = getNumber(command[_type + "Change"]);
     const hasCount = command.hasOwnProperty("count"); // countを持っているかどうか
-    // ループを抜けないかどうか
+    // ループを抜けるかどうか. countがある場合はwaitのように毎フレーム抜ける。
     const loopAdvanceFlag = (hasCount ? false : true);
     if(command.mode === "set"){
       if(hasCount){
-        const cc = unit.getLoopCount();
+        const cc = unit.counter.getLoopCount();
         // cc(currentLoopCount)から目標値との割合を計算する感じ.
         unit[_type] = map(cc + 1, cc, command.count, unit[_type], newParameter);
       }else{
@@ -3067,7 +3094,7 @@ function execute(unit, command){
     if(["speed", "direction"].includes(_type)){ unit.velocityUpdate(); }
     // インデックスを増やすかどうか（countがあるならカウント進める）
     // countがある場合は処理が終了している時に限り進める感じ。
-    const indexAdvanceFlag = (hasCount ? unit.loopCheck(command.count) : true);
+    const indexAdvanceFlag = (hasCount ? unit.counter.loopCheck(command.count) : true);
     if(indexAdvanceFlag){ unit.actionIndex++; }
     return loopAdvanceFlag; // フラグによる
   }
@@ -3116,17 +3143,17 @@ function execute(unit, command){
   if(_type === "wait"){
     // loopCounterを1増やす。countと一致した場合だけloopCounterとcurrentのインデックスを同時に増やす。
     // loopCheckは該当するカウントを1増やしてlimitに達したらtrueを返すもの。
-    if(unit.loopCheck(command.count)){
+    if(unit.counter.loopCheck(command.count)){
       unit.actionIndex++;
     }
     return false; // waitは常にループを抜ける
   }
   if(_type === "loop"){
-    if(unit.loopCheck(command.count)){
+    if(unit.counter.loopCheck(command.count)){
       unit.actionIndex++;
     }else{
       // バック処理(INFの場合常にこっち)
-      unit.loopBack(command.back);
+      unit.counter.loopBack(unit, command.back);
     }
     return true; // ループは抜けない
   }
@@ -3139,7 +3166,7 @@ function execute(unit, command){
   }
   if(_type === "vanish"){
     // vanishDelayまで何もしない、そのあと消える。デフォルトは1. {vanish:1}ですぐ消える。
-    if(unit.loopCheck(command.vanishDelay)){ unit.vanishFlag = true; }
+    if(unit.counter.loopCheck(command.vanishDelay)){ unit.vanishFlag = true; }
     return false; // ループを抜ける
   }
   if(_type === "hide"){
