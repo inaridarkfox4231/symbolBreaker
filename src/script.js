@@ -1124,12 +1124,16 @@ function createSmallParticle(unit, target){
 
 class SelfUnit{
 	constructor(){
+    this.isPlayer = true; // プレイヤーかどうか。fireコマンドの分岐に使う。
 		this.position = createVector(0, 0);
-    this.weapon = []; // 武器庫
-    this.fire = undefined; // 関数を入れる
+    //this.weapon = []; // 武器庫
+    //this.fire = undefined; // 関数を入れる
     this.collisionFlag = PLAYER; // 衝突フラグ
     this.shotCollisionFlag = PLAYER_BULLET; // ショットはPLAYER_BULLET.
     this.collider = new CircleCollider();
+    this.counter = new LoopCounter(); // ループカウンタ用意しました。はい。
+    this.ptnArray = [];
+    this.ptnIndex = 0; // 現時点でのptnのインデックス(levelを導入する場合には更にlevelを追加して[index][level]...)
     this.size = 20;
     // life関連
     this.maxLife = 50;
@@ -1145,38 +1149,49 @@ class SelfUnit{
     // つまり用意すべきはSeedのようなものであって、fireの単純なメソッドではない・・と。
     // レーザー撃ちたいんだよう。
     // x, yはあとで自分のを追加する。
-    /*
+    // これをセットする関数を用意して・・
     let mySeed0 = {
       speed:4, shotSpeed:8, shotDirection:-90, shotShape:"wedgeSmall", shotColor:"black", color:"black",
       action:{
-        main:[{fire:"set4"}, {wait:8}]
+        main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
       },
-      fireDef:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}
+      fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
     };
-    mySeed0.x = this.position.x;
-    mySeed0.y = this.position.y;
-    */
-    let weaponSeed0 = {formation:{type:"frontVertical", count:4, distance:15, interval:15}};
-    this.weapon.push(createFirePattern(weaponSeed0));
-    this.fire = this.weapon[0];
+    //mySeed0.x = this.position.x;
+    //mySeed0.y = this.position.y;
+    const myPtn0 = parsePatternSeed(mySeed0);
+    this.ptnArray.push(myPtn0); // ptnArrayには攻撃パターンが色々入っててシフトキーで変更できる予定。
+    // 具体的には各種decorate処理及びactionの差し替え。
+    // 追加プロパティ：action, actionIndex, counter, ptnArray, ptnIndex. 廃止プロパティ：weapon, fire, wait.
+
+    //let weaponSeed0 = {formation:{type:"frontVertical", count:4, distance:15, interval:15}};
+    //this.weapon.push(createFirePattern(weaponSeed0));
+    //this.fire = this.weapon[0];
   }
 	initialize(){
-		this.position.set(AREA_WIDTH * 0.5, AREA_HEIGHT * 0.875); // プレイヤーの位置を決めてるところ
-		this.speed = 4;
-		this.rotationAngle = 0;
-		this.rotationSpeed = -2;
-    this.wait = 0; // fire時のwaitTime. 連射を防ぐ感じ。
+    // action関連
+    this.action = [];
+    this.actionIndex = 0;
+    //this.counter.initialize();
+    this.ptnIndex = 0;
+    this.setPattern(this.ptnArray[0]); // ここは実行中にもあれこれやるってことで・・
+    // プレイヤーの位置はここで。パターンチェンジで位置はいじらないので。
+		this.position.set(AREA_WIDTH * 0.5, AREA_HEIGHT * 0.875);
+		//this.speed = 4;
+    //this.wait = 0; // fire時のwaitTime. 連射を防ぐ感じ。廃止→counterにする。unitと統一。
     // ショット関連
-    this.shotSpeed = 8;
-    this.shotDirection = -90;
-    this.shotBehavior = {};
-    this.shotAction = [];
-    this.shotColor = entity.drawColor["black"];
-    this.bodyColor = entity.drawColor[this.shotColor.name];
-    this.shotShape = entity.drawShape["wedgeSmall"];
-    this.shotDelay = 0;
-    // collider.
+    //this.shotSpeed = 8;
+    //this.shotDirection = -90;
+    //this.shotBehavior = {};
+    //this.shotAction = [];
+    //this.shotColor = entity.drawColor["black"];
+    //this.bodyColor = entity.drawColor["black"];
+    //this.shotShape = entity.drawShape["wedgeSmall"];
+    //this.shotDelay = 0;
+    // collider, drawModule.
     this.collider.update(this.position.x, this.position.y, 5);
+    this.rotationAngle = 0;
+		this.rotationSpeed = -2;
     // life関連（クラスにした方がいいのかなぁ）
     this.maxLife = 50;
     this.life = this.maxLife;
@@ -1187,6 +1202,25 @@ class SelfUnit{
 	setPosition(x, y){
 		this.position.set(x, y);
 	}
+  setPattern(ptn){
+    // カウンターの初期化はここでやるべき（initializeとは別にパターンチェンジするので）
+    this.counter.initialize();
+    // パターンの内容を元にごにょごにょ
+    //this.setPosition(ptn.x * AREA_WIDTH, ptn.y * AREA_HEIGHT); // 位置はいじらないよ！
+    const {speed, shotSpeed, shotDirection, shotBehavior, shotColor, color, shotShape, shotDelay} = ptn;
+    this.speed = (speed !== undefined ? ptn.speed : 4);
+    this.shotSpeed = (shotSpeed !== undefined ? ptn.shotSpeed : 8);
+    this.shotDirection = (shotDirection !== undefined ? ptn.shotDirection : -90);
+    this.shotBehavior = {};
+    if(shotBehavior !== undefined){ Object.assign(this.shotBehavior, ptn.shotBehavior); }
+    this.shotAction = []; // action内で設定する。
+    this.shotColor = (shotColor !== undefined ? ptn.shotColor : entity.drawColor["black"]);
+    this.color = (color !== undefined ? ptn.color : entity.drawColor["black"]);
+    this.shotShape = (shotShape !== undefined ? ptn.shotShape : entity.drawShape["wedgeSmall"]);
+    this.shotDelay = (shotDelay !== undefined ? ptn.shotDelay : 0);
+    // actionをセット。
+    this.action = ptn.action;
+  }
 	update(){
     if(this.vanishFlag){ return; }
 		this.rotationAngle += this.rotationSpeed;
@@ -1197,7 +1231,7 @@ class SelfUnit{
 		else if(keyIsDown(DOWN_ARROW)){ this.position.y += this.speed; }
     this.inFrame();
     const {x:newX, y:newY} = this.position;
-    // 位置が更新した時だけhealCountを増やす
+    // 位置が更新した時だけhealCountを増やす(移動による回復(ポケダン的な))
     if(x !== newX || y !== newY){
       this.healCount++;
       if(this.healCount === this.maxHealCount){
@@ -1212,7 +1246,7 @@ class SelfUnit{
     if(this.life > this.maxLife){ this.life = this.maxLife; }
     if(this.life > 0){ return; }
     // パーティクル出して。
-    const newParticle = new Particle(this.position.x, this.position.y, 20, this.bodyColor);
+    const newParticle = new Particle(this.position.x, this.position.y, 20, this.color);
     entity.particleArray.add(newParticle);
     this.life = 0;
     this.vanishFlag = true;
@@ -1226,10 +1260,26 @@ class SelfUnit{
   execute(){
     if(this.vanishFlag){ return; }
     // 主にfireなど。
-    if(this.wait > 0){ this.wait--; }
-    if(keyIsDown(32) && this.wait === 0){
-      this.fire(this);
-      this.wait = 4;
+    //if(this.wait > 0){ this.wait--; }
+    //if(keyIsDown(32) && this.wait === 0){
+    //  this.fire(this);
+    //  this.wait = 4;
+    //}
+    // アクションの実行（処理が終了しているときは何もしない）（vanish待ちのときも何もしない）
+    if(this.action.length > 0 && this.actionIndex < this.action.length){
+      let debug = 0; // デバッグモード
+      let continueFlag = true;
+      while(continueFlag){
+        const command = this.action[this.actionIndex];
+        continueFlag = execute(this, command); // flagがfalseを返すときに抜ける
+        debug++; // デバッグモード
+        if(debug > 10000){
+          console.log("INFINITE LOOP ERROR!!");
+          console.log(command, this.actionIndex);
+          noLoop(); break; } // デバッグモード
+        // actionの終わりに来たら勝手に抜ける。その後は永久にwaitになる（予定）
+        if(this.actionIndex === this.action.length){ break; }
+      }
     }
   }
 	inFrame(){
@@ -1242,12 +1292,14 @@ class SelfUnit{
 		const {x, y} = this.position;
 		const c = cos(this.rotationAngle) * this.size;
 		const s = sin(this.rotationAngle) * this.size;
-		stroke(this.bodyColor);
+		//stroke(this.bodyColor);
+    stroke(this.color);
 		noFill();
 		strokeWeight(2);
 		quad(x + c, y + s, x - s, y + c, x - c, y - s, x + s, y - c);
     noStroke();
-    fill(this.bodyColor);
+    //fill(this.bodyColor);
+    fill(this.color);
     ellipse(x, y, 10, 10); // 直径10. 半径は5. ここが当たり判定。
     // ライフゲージ。
     const l = this.life * this.size * 2 / this.maxLife;
@@ -1261,6 +1313,7 @@ class SelfUnit{
 
 class Unit{
   constructor(){
+    this.isPlayer = false; // プレイヤーではない。
     this.position = createVector();
     this.previousPosition = createVector(); // 前フレームでの位置
     this.velocity = createVector();
@@ -2742,8 +2795,9 @@ function parsePatternSeed(seed){
   const {x, y} = seed;
   // x, yは0.4や0.3や[0.1, 0.9]や[0.4, 0.8, 0.05]みたいなやつ。
   // ここでもう数にしてしまおうね。
-  ptn.x = getNumber(x) * AREA_WIDTH;
-  ptn.y = getNumber(y) * AREA_HEIGHT;
+  // x, yは存在しないこともある（プレイヤーのとか）ので。
+  if(x !== undefined){ ptn.x = getNumber(x) * AREA_WIDTH; }
+  if(y !== undefined){ ptn.y = getNumber(y) * AREA_HEIGHT; }
 
   // behavior関連
   const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection", "shotDelay"]
@@ -3126,6 +3180,9 @@ function execute(unit, command){
   }
   if(_type === "fire"){
     // fire忘れてた
+    if(unit.isPlayer && !keyIsDown(32)){
+      return false; // プレイヤーの場合はスペースキーが押されなければ離脱する。
+    }
     command.fire(unit);
     unit.actionIndex++;
     return true; // 発射したら次へ！
