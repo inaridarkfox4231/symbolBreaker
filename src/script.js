@@ -761,6 +761,13 @@ function keyTyped(){
   }
 }
 
+function keyPressed(){
+  // シフトキーでショットチェンジ（予定）
+  if(keyCode === SHIFT){
+    entity.player.shiftPattern();
+  }
+}
+
 // ---------------------------------------------------------------------------------------- //
 // ClickAction.
 
@@ -1150,45 +1157,44 @@ class SelfUnit{
     // レーザー撃ちたいんだよう。
     // x, yはあとで自分のを追加する。
     // これをセットする関数を用意して・・
+    // fireを改造してプレイヤーの場合はシフトキー押さないとactionが進まないようにした。これでOK.
+    // いろんなショットを自由自在に放てるようになる。なんならブロック組み合わせるようにして・・・
     let mySeed0 = {
-      speed:4, shotSpeed:8, shotDirection:-90, shotShape:"wedgeSmall", shotColor:"black", color:"black",
+      // default.
       action:{
         main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
       },
       fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
     };
-    //mySeed0.x = this.position.x;
-    //mySeed0.y = this.position.y;
+    // スプラッシュガン（嘘です）
+    // レーザー撃ってみよう。
+    let mySeed1 = {
+      shotSpeed:0.1, color:"dkskblue",
+      action:{
+        main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:60}, {loop:INF, back:2}],
+        laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
+                   {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
+                   {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
+        calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
+      }
+    };
     const myPtn0 = parsePatternSeed(mySeed0);
+    const myPtn1 = parsePatternSeed(mySeed1);
     this.ptnArray.push(myPtn0); // ptnArrayには攻撃パターンが色々入っててシフトキーで変更できる予定。
+    this.ptnArray.push(myPtn1);
     // 具体的には各種decorate処理及びactionの差し替え。
     // 追加プロパティ：action, actionIndex, counter, ptnArray, ptnIndex. 廃止プロパティ：weapon, fire, wait.
-
-    //let weaponSeed0 = {formation:{type:"frontVertical", count:4, distance:15, interval:15}};
-    //this.weapon.push(createFirePattern(weaponSeed0));
-    //this.fire = this.weapon[0];
   }
 	initialize(){
-    // action関連
-    this.action = [];
-    this.actionIndex = 0;
+    // action関連はsetPattern内で行う。
+    //this.action = [];
+    //this.actionIndex = 0;
     //this.counter.initialize();
     this.ptnIndex = 0;
     this.setPattern(this.ptnArray[0]); // ここは実行中にもあれこれやるってことで・・
     // プレイヤーの位置はここで。パターンチェンジで位置はいじらないので。
 		this.position.set(AREA_WIDTH * 0.5, AREA_HEIGHT * 0.875);
-		//this.speed = 4;
-    //this.wait = 0; // fire時のwaitTime. 連射を防ぐ感じ。廃止→counterにする。unitと統一。
-    // ショット関連
-    //this.shotSpeed = 8;
-    //this.shotDirection = -90;
-    //this.shotBehavior = {};
-    //this.shotAction = [];
-    //this.shotColor = entity.drawColor["black"];
-    //this.bodyColor = entity.drawColor["black"];
-    //this.shotShape = entity.drawShape["wedgeSmall"];
-    //this.shotDelay = 0;
-    // collider, drawModule.
+    // collider関連
     this.collider.update(this.position.x, this.position.y, 5);
     this.rotationAngle = 0;
 		this.rotationSpeed = -2;
@@ -1206,7 +1212,7 @@ class SelfUnit{
     // カウンターの初期化はここでやるべき（initializeとは別にパターンチェンジするので）
     this.counter.initialize();
     // パターンの内容を元にごにょごにょ
-    //this.setPosition(ptn.x * AREA_WIDTH, ptn.y * AREA_HEIGHT); // 位置はいじらないよ！
+    // 位置はいじらないよ！
     const {speed, shotSpeed, shotDirection, shotBehavior, shotColor, color, shotShape, shotDelay} = ptn;
     this.speed = (speed !== undefined ? ptn.speed : 4);
     this.shotSpeed = (shotSpeed !== undefined ? ptn.shotSpeed : 8);
@@ -1220,6 +1226,13 @@ class SelfUnit{
     this.shotDelay = (shotDelay !== undefined ? ptn.shotDelay : 0);
     // actionをセット。
     this.action = ptn.action;
+    this.actionIndex = 0;
+  }
+  shiftPattern(){
+    // 1つ進める感じで。とりあえず。level用意するならそこら辺も考慮すべきなんだろうけど・・・
+    this.ptnIndex++;
+    if(this.ptnIndex === this.ptnArray.length){ this.ptnIndex = 0; }
+    this.setPattern(this.ptnArray[this.ptnIndex]);
   }
 	update(){
     if(this.vanishFlag){ return; }
@@ -1260,11 +1273,11 @@ class SelfUnit{
   execute(){
     if(this.vanishFlag){ return; }
     // 主にfireなど。
-    //if(this.wait > 0){ this.wait--; }
-    //if(keyIsDown(32) && this.wait === 0){
+    // if(this.wait > 0){ this.wait--; }
+    // if(keyIsDown(32) && this.wait === 0){
     //  this.fire(this);
     //  this.wait = 4;
-    //}
+    // }
     // アクションの実行（処理が終了しているときは何もしない）（vanish待ちのときも何もしない）
     if(this.action.length > 0 && this.actionIndex < this.action.length){
       let debug = 0; // デバッグモード
