@@ -1141,6 +1141,9 @@ class SelfUnit{
 		this.initialize();
 	}
   prepareWeapon(){
+    // ここ改良したいわね・・ていうか自身のshotActionとかshotShapeとかも同時に切り替わるようにできないかな。
+    // つまり用意すべきはSeedのようなものであって、fireの単純なメソッドではない・・と。
+    // レーザー撃ちたいんだよう。
     let weaponSeed0 = {formation:{type:"frontVertical", count:4, distance:15, interval:15}};
     this.weapon.push(createFirePattern(weaponSeed0));
     this.fire = this.weapon[0];
