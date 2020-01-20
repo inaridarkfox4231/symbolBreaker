@@ -923,9 +923,9 @@ class System{
   }
   registDrawGroup(unit){
     // colorから名前を引き出す。
-    const name = unit.color.name;
-    // let name = unit.color.name;
-    // if(unit.collider.type === "laser"){ name = "laser"; }
+    //const name = unit.color.name;
+    let name = unit.color.name;
+    if(unit.collider.type === "laser"){ name = "laser"; } // laserは別立て描画
 
     if(!this.drawGroup.hasOwnProperty(name)){
       this.drawGroup[name] = new CrossReferenceArray();
@@ -1084,7 +1084,7 @@ class System{
 	draw(){
 		this.player.draw();
     Object.keys(this.drawGroup).forEach((name) => {
-      fill(this.drawColor[name]);
+      if(name !== "laser"){ fill(this.drawColor[name]); }
       this.drawGroup[name].loop("draw"); // 色別に描画(laserは別立て)
     })
     // particleの描画(noStroke()を忘れないこと)
@@ -1879,17 +1879,26 @@ class DrawLaserShape extends DrawShape{
   }
   draw(unit){
     // 四角形でいいよね。
+    // 見た目変えようかな。
+    const r = red(unit.color);
+    const g = green(unit.color);
+    const b = blue(unit.color);
     const {x, y} = unit.position;
     const {x:px, y:py} = unit.parent.position;
     const direction = atan2(y - py, x - px);
-    const dx = cos(direction) * this.size;
-    const dy = sin(direction) * this.size;
-    const fx = dx * 0.1;
-    const fy = dy * 0.1;
-    quad( x - dy,  y + dx,  x - fy,  y + fx,
-         px - fy, py + fx, px - dy, py + dx);
-    quad( x + dy,  y - dx,  x + fy,  y - fx,
-         px + fy, py - fx, px + dy, py - dx);
+    let dx = cos(direction) * this.size;
+    let dy = sin(direction) * this.size;
+    fill(r, g, b);
+    quad(x - dy, y + dx, x + dy, y - dx, px + dy, py - dx, px - dy, py + dx);
+    fill(85 + r * 2 / 3, 85 + g * 2 / 3, 85 + b * 2 / 3);
+    dx *= 0.66; dy *= 0.66;
+    quad(x - dy, y + dx, x + dy, y - dx, px + dy, py - dx, px - dy, py + dx);
+    fill(170 + r / 3, 170 + g / 3, 170 + b / 3);
+    dx *= 0.5; dy *= 0.5;
+    quad(x - dy, y + dx, x + dy, y - dx, px + dy, py - dx, px - dy, py + dx);
+    fill(255);
+    dx *= 0.33; dy *= 0.33;
+    quad(x - dy, y + dx, x + dy, y - dx, px + dy, py - dx, px - dy, py + dx);
   }
 }
 
