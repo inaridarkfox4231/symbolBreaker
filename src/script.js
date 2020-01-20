@@ -861,10 +861,10 @@ function registUnitShapes(){
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
         .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
-        .registShape("laserSmall", new DrawLaserShape(5))
-        .registShape("laserMiddle", new DrawLaserShape(10))
-        .registShape("laserLarge", new DrawLaserShape(15))
-        .registShape("laserHuge", new DrawLaserShape(30));
+        .registShape("laserSmall", new DrawLaserShape(8))
+        .registShape("laserMiddle", new DrawLaserShape(16))
+        .registShape("laserLarge", new DrawLaserShape(24))
+        .registShape("laserHuge", new DrawLaserShape(48));
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -924,6 +924,8 @@ class System{
   registDrawGroup(unit){
     // colorから名前を引き出す。
     const name = unit.color.name;
+    // let name = unit.color.name;
+    // if(unit.collider.type === "laser"){ name = "laser"; }
 
     if(!this.drawGroup.hasOwnProperty(name)){
       this.drawGroup[name] = new CrossReferenceArray();
@@ -1083,7 +1085,7 @@ class System{
 		this.player.draw();
     Object.keys(this.drawGroup).forEach((name) => {
       fill(this.drawColor[name]);
-      this.drawGroup[name].loop("draw"); // 色別に描画
+      this.drawGroup[name].loop("draw"); // 色別に描画(laserは別立て)
     })
     // particleの描画(noStroke()を忘れないこと)
     noFill();
@@ -1862,13 +1864,13 @@ class DrawDoubleWedgeShape extends DrawShape{
 // 先端とunit.positionとの距離を指定してコンストラクトする。剣先からなんか出す場合の参考にする。
 
 // レーザーはparent使おうかな
-// size:5, 10, 15, 30.
+// size:8, 16, 24, 48.
 class DrawLaserShape extends DrawShape{
   constructor(size){
     super();
     this.colliderType = "laser";
     this.size = size;
-    this.damage = size * 0.2; // スリップダメージ
+    this.damage = size * 0.1; // スリップダメージ
   }
   set(unit){
     unit.collider = new LaserCollider();
