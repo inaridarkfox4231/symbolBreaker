@@ -25,10 +25,11 @@ const ENEMY = 3;
 const PLAYER = 4;
 
 // 今のままでいいからとりあえず関数化とか変数化、やる。
-
+// 解析用グローバル変数
 let isLoop = true;
 let showInfo = true;
 
+// 解析用パラメータ
 let runTimeSum = 0;
 let runTimeAverage = 0;
 let runTimeMax = 0;
@@ -1107,19 +1108,14 @@ function createUnit(pattern){
   // 色、形についてはsetPatternで行う感じ。
 }
 
-// life = 60, speed = 4, count = 20がデフォルト。
-function createParticle(unit){
-  const size = unit.shape.size * 0.7; // やや小さく
+// やられるとき：sizeFactor = 0.7, life = 60, speed = 4, count = 20.
+// ダメージ時：sizeFactor = 2.0, life = 30, speed = 4, count = 5.
+// targetは発生場所。レーザーの場合はくらった相手の場所に発生させる。
+// レーザーダメージ時：sizeFactor = 2.0, life = 15, speed = 4, count = 2.
+function createParticle(unit, target, sizeFactor, life, speed, count){
+  const size = unit.shape.size * sizeFactor;  // やられる時は0.7, ダメージ時は2.0で。
   const _color = unit.color;
-  let newParticle = new Particle(unit.position.x, unit.position.y, size, _color);
-  entity.particleArray.add(newParticle);
-}
-
-// targetは出現位置。unitのposと違う場合があるので。
-function createSmallParticle(unit, target){
-  const size = unit.shape.size * 2.0;
-  const _color = unit.color;
-  let newParticle = new Particle(target.position.x, target.position.y, size, _color, 30, 4, 5);
+  let newParticle = new Particle(target.position.x, target.position.y, size, _color, life, speed, count);
   entity.particleArray.add(newParticle);
 }
 
@@ -1469,7 +1465,7 @@ class Unit{
     if(this.belongingArrayList.length > 0){ console.log("REMOVE ERROR!"); noLoop(); } // 排除ミス
     // ENEMYが消えたときにパーティクルを出力する。hide状態なら出力しない。
     if(this.collisionFlag === ENEMY && this.hide === false){
-      createParticle(this);
+      createParticle(this, this, 0.7, 60, 4, 20);
     }
 
     unitPool.recycle(this); // 名称をunitPoolに変更
@@ -1516,8 +1512,8 @@ class Unit{
         //console.log("I'm enemy bullet!");
         // 小さめのパーティクル
         if(!this.hide){
-          if(this.collider.type === "circle"){ createSmallParticle(this, this); }
-          else{ /* レーザー */ createSmallParticle(this, unit); }
+          if(this.collider.type === "circle"){ createParticle(this, this, 2.0, 30, 4, 5); }
+          else{ /* レーザー */ createParticle(this, unit, 2.0, 15, 4, 2); }
         }
         if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
         break;
@@ -1525,8 +1521,8 @@ class Unit{
         //console.log("I'm player bullet!");
         // 小さめのパーティクル
         if(!this.hide){
-          if(this.collider.type === "circle"){ createSmallParticle(this, this); }
-          else{ /* レーザー */ createSmallParticle(this, unit); }
+          if(this.collider.type === "circle"){ createParticle(this, this, 2.0, 30, 4, 5); }
+          else{ /* レーザー */ createParticle(this, unit, 2.0, 15, 4, 2); }
         }
         if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
         break;
