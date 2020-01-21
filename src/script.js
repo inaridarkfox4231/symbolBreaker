@@ -65,8 +65,6 @@ function setup(){
   angleMode(DEGREES);
   textSize(16);
   entity = new System();
-  registUnitColors(); // 色を用意する。
-  registUnitShapes(); // 形を用意する。
   entity.createPlayer();
   // これでentity経由で色や形の情報を取得できる
   unitPool = new ObjectPool(() => { return new Unit(); }, 1024);
@@ -800,74 +798,6 @@ function drawConfig(){
 }
 
 // ---------------------------------------------------------------------------------------- //
-// registUnitColors.
-// ダメージも付けるか・・？追加プロパティ、nameの他にも、ってこと。
-// 第3引数：damageFactor, 第4引数：lifeFactor.
-
-function registUnitColors(){
-  entity.registColor("black", color(0), 1, 50)
-        .registColor("blue", color(63, 72, 204), 1, 1)
-        .registColor("dkblue", color(35, 43, 131), 1, 1)
-        .registColor("skblue", color(0, 128, 255), 1, 1)
-        .registColor("dkskblue", color(0, 107, 153),1, 1)
-        .registColor("plskblue", color(159, 226, 255), 1, 1)
-        .registColor("plblue", color(125, 133, 221), 1, 1)
-        .registColor("red", color(237, 28, 36), 1, 1)
-        .registColor("plred", color(247, 153, 157), 1, 1)
-        .registColor("dkred", color(146, 12, 18), 3, 3)
-        .registColor("yellow", color(255, 242, 0), 1, 1)
-        .registColor("dkyellow", color(142, 135, 0), 1, 1)
-        .registColor("dkgreen", color(17, 91, 39), 1, 1)
-        .registColor("green", color(34, 177, 76), 1, 1)
-        .registColor("plgreen", color(108, 227, 145), 1, 1)
-        .registColor("brown", color(128, 64, 0), 1, 1)
-        .registColor("purple", color(163, 73, 164), 1, 1)
-        .registColor("dkpurple", color(95, 41, 95), 1, 1)
-        .registColor("plorange", color(255, 191, 149), 1, 1)
-        .registColor("orange", color(255, 127, 39), 1, 1)
-        .registColor("dkorange", color(180, 70, 0), 2, 2)
-        .registColor("gold", color(128, 128, 0), 1, 1)
-        .registColor("dkgrey", color(64), 1, 1)
-        .registColor("plgrey", color(200), 1, 1)
-        .registColor("grey", color(128), 1, 1)
-        .registColor("ltgreen", color(181, 230, 29), 1, 1)
-        .registColor("pink", color(255, 55, 120), 1, 1)
-        .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
-        .registColor("bossRed", color(74, 6, 10), 5, 50); // ボス用のワインレッド（1面のボス）
-}
-
-// ---------------------------------------------------------------------------------------- //
-// registUnitShapes.
-
-function registUnitShapes(){
-  entity.registShape("wedgeSmall", new DrawWedgeShape(6, 3))
-        .registShape("wedgeMiddle", new DrawWedgeShape(12, 6))
-        .registShape("wedgeLarge", new DrawWedgeShape(18, 9))
-        .registShape("wedgeHuge", new DrawWedgeShape(36, 18))
-        .registShape("squareSmall", new DrawSquareShape(10))
-        .registShape("squareMiddle", new DrawSquareShape(20))
-        .registShape("squareLarge", new DrawSquareShape(30))
-        .registShape("squareHuge", new DrawSquareShape(60))
-        .registShape("starSmall", new DrawStarShape(3))
-        .registShape("starMiddle", new DrawStarShape(6))
-        .registShape("starLarge", new DrawStarShape(9))
-        .registShape("starHuge", new DrawStarShape(18))
-        .registShape("diaSmall", new DrawDiaShape(8))
-        .registShape("rectSmall", new DrawRectShape(6, 4))
-        .registShape("rectMiddle", new DrawRectShape(12, 8))
-        .registShape("rectLarge", new DrawRectShape(18, 12))
-        .registShape("rectHuge", new DrawRectShape(36, 24))
-        .registShape("doubleWedgeSmall", new DrawDoubleWedgeShape(10))
-        .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
-        .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
-        .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
-        .registShape("laserSmall", new DrawLaserShape(8))
-        .registShape("laserMiddle", new DrawLaserShape(16))
-        .registShape("laserLarge", new DrawLaserShape(24))
-        .registShape("laserHuge", new DrawLaserShape(48));
-}
-
-// ---------------------------------------------------------------------------------------- //
 // System.
 // とりあえずplayerを持たせるだけ
 
@@ -882,7 +812,9 @@ class System{
     this.backgroundColor = color(220, 220, 255); // デフォルト（薄い青）
     this.infoColor = color(0); // デフォルト（情報表示の色、黒）
     this.drawColor = {}; // 色の辞書
+    this.registUnitColors();
     this.drawShape = {}; // 形を表現する関数の辞書
+    this.registUnitShapes();
     this.drawGroup = {}; // 描画用に用意されたCrossReferenceArrayからなるオブジェクト
     // になるみたいな、それを外部関数でやる。
     // this.drawGroup = {}; hasOwnでたとえばblueがないなってなったらnew CrossReferenceArray()して放り込むとか。
@@ -1095,6 +1027,65 @@ class System{
 	}
   getCapacity(){
     return this.unitArray.length;
+  }
+  registUnitColors(){
+    // 第3引数：damageFactor, 第4引数：lifeFactor. バランス調整が課題。
+    this.registColor("black", color(0), 1, 50)
+        .registColor("blue", color(63, 72, 204), 1, 1)
+        .registColor("dkblue", color(35, 43, 131), 1, 1)
+        .registColor("skblue", color(0, 128, 255), 1, 1)
+        .registColor("dkskblue", color(0, 107, 153),1, 1)
+        .registColor("plskblue", color(159, 226, 255), 1, 1)
+        .registColor("plblue", color(125, 133, 221), 1, 1)
+        .registColor("red", color(237, 28, 36), 1, 1)
+        .registColor("plred", color(247, 153, 157), 1, 1)
+        .registColor("dkred", color(146, 12, 18), 3, 3)
+        .registColor("yellow", color(255, 242, 0), 1, 1)
+        .registColor("dkyellow", color(142, 135, 0), 1, 1)
+        .registColor("dkgreen", color(17, 91, 39), 1, 1)
+        .registColor("green", color(34, 177, 76), 1, 1)
+        .registColor("plgreen", color(108, 227, 145), 1, 1)
+        .registColor("brown", color(128, 64, 0), 1, 1)
+        .registColor("purple", color(163, 73, 164), 1, 1)
+        .registColor("dkpurple", color(95, 41, 95), 1, 1)
+        .registColor("plorange", color(255, 191, 149), 1, 1)
+        .registColor("orange", color(255, 127, 39), 1, 1)
+        .registColor("dkorange", color(180, 70, 0), 2, 2)
+        .registColor("gold", color(128, 128, 0), 1, 1)
+        .registColor("dkgrey", color(64), 1, 1)
+        .registColor("plgrey", color(200), 1, 1)
+        .registColor("grey", color(128), 1, 1)
+        .registColor("ltgreen", color(181, 230, 29), 1, 1)
+        .registColor("pink", color(255, 55, 120), 1, 1)
+        .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
+        .registColor("bossRed", color(74, 6, 10), 5, 50); // ボス用のワインレッド（1面のボス）
+  }
+  registUnitShapes(){
+    this.registShape("wedgeSmall", new DrawWedgeShape(6, 3))
+        .registShape("wedgeMiddle", new DrawWedgeShape(12, 6))
+        .registShape("wedgeLarge", new DrawWedgeShape(18, 9))
+        .registShape("wedgeHuge", new DrawWedgeShape(36, 18))
+        .registShape("squareSmall", new DrawSquareShape(10))
+        .registShape("squareMiddle", new DrawSquareShape(20))
+        .registShape("squareLarge", new DrawSquareShape(30))
+        .registShape("squareHuge", new DrawSquareShape(60))
+        .registShape("starSmall", new DrawStarShape(3))
+        .registShape("starMiddle", new DrawStarShape(6))
+        .registShape("starLarge", new DrawStarShape(9))
+        .registShape("starHuge", new DrawStarShape(18))
+        .registShape("diaSmall", new DrawDiaShape(8))
+        .registShape("rectSmall", new DrawRectShape(6, 4))
+        .registShape("rectMiddle", new DrawRectShape(12, 8))
+        .registShape("rectLarge", new DrawRectShape(18, 12))
+        .registShape("rectHuge", new DrawRectShape(36, 24))
+        .registShape("doubleWedgeSmall", new DrawDoubleWedgeShape(10))
+        .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
+        .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
+        .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
+        .registShape("laserSmall", new DrawLaserShape(8))
+        .registShape("laserMiddle", new DrawLaserShape(16))
+        .registShape("laserLarge", new DrawLaserShape(24))
+        .registShape("laserHuge", new DrawLaserShape(48));
   }
 }
 
@@ -1879,7 +1870,7 @@ class DrawLaserShape extends DrawShape{
   }
   draw(unit){
     // 四角形でいいよね。
-    // 見た目変えようかな。
+    // 見た目変えようかな。真ん中に行くほど白っぽい感じに。
     const r = red(unit.color);
     const g = green(unit.color);
     const b = blue(unit.color);
