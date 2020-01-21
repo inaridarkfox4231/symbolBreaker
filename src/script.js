@@ -644,8 +644,6 @@ function setup(){
     fireDef:{way:{nway:{count:"$count", interval:20}}}
   };
 
-
-  // どうする？？
   entity.setPattern(DEFAULT_PATTERN_INDEX);
 }
 
