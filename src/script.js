@@ -681,7 +681,28 @@ function setup(){
     fireDef:{way2:{nway:{count:2, interval:30}}, way6:{nway:{count:6, interval:8}}}
   })
 
-  // 意図的にPLAYERフラグを持つunitを生成して同士討ちさせる実験
+  // groundRaidのlaserバージョン。
+  // calmの中身でwait:30とか適切に間合いを置かなかったせいでいきなりsignalが発動しちゃうバグが発生していたっぽい。
+  // クリアできないようにway3にしといた。OK!
+  mySystem.addPatternSeed({
+    x:0.5, y:0.3, collisionFlag:ENEMY, color:"bossRed", bgColor:"plred",
+    shotShape:"wedgeMiddle", shotColor:"dkred", shotSpeed:4, shotBehavior:["fall"],
+    action:{
+      main:[{shotAction:["set", "braze"]},
+            {shotDirection:["set", [-120, -60]]}, {shotSpeed:["set", [3, 6]]},
+            {fire:""}, {wait:60}, {loop:INF, back:4}],
+      braze:[{signal:"ground"}, {shotSpeed:["set", 0.1]}, {aim:10},
+             {shotAction:["set", "laserUnit"]}, {fire:"way3"}, {vanish:1}],
+      laserUnit:[{hide:true},
+                 {shotShape:"laserMiddle"},
+                 {shotAction:["set", "calm"]},
+                 {shotSpeed:["set", 12]}, {shotDirection:["rel", 0]},
+                 {fire:""}, {speed:["set", 12, 60]}, {signal:"frameOut"}, {vanish:1}],
+      calm:[{bind:true}, {wait:30}, {signal:"frameOut"}, {speed:["set", 0.1]}]
+    },
+    fireDef:{way3:{nway:{count:3, interval:20}}},
+    behaviorDef:{fall:["freeFall", {}]}
+  })
 
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
