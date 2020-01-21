@@ -65,9 +65,33 @@ function setup(){
   angleMode(DEGREES);
   textSize(16);
   entity = new System();
-  entity.createPlayer();
-  // これでentity経由で色や形の情報を取得できる
+
   unitPool = new ObjectPool(() => { return new Unit(); }, 1024);
+
+  let weaponData = [];
+  let weaponCapacity = 0;
+
+  // プレイヤーの攻撃パターン作成
+  // デフォルト。黒い弾丸をいっぱい。
+  weaponData[weaponCapacity++] = {
+    action:{
+      main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
+    },
+    fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
+  };
+  // レーザー撃ってみよう。60フレーム経たないと再発射できない。
+  weaponData[weaponCapacity++] = {
+    shotSpeed:0.1, color:"dkskblue",
+    action:{
+      main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:60}, {loop:INF, back:2}],
+      laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
+                 {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
+                 {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
+      calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
+    }
+  };
+
+  entity.createPlayer(weaponData);
 
   seedSet["seed" + (seedCapacity++)] = {
     x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
@@ -645,6 +669,7 @@ function setup(){
   };
 
   entity.setPattern(DEFAULT_PATTERN_INDEX);
+
 }
 
 function draw(){
@@ -822,8 +847,8 @@ class System{
     this._qTree = new LinearQuadTreeSpace(AREA_WIDTH, AREA_HEIGHT, 3);
     this._detector = new CollisionDetector();
 	}
-  createPlayer(){
-    this.player = new SelfUnit();
+  createPlayer(weaponData){
+    this.player = new SelfUnit(weaponData);
   }
   getPatternIndex(){
     return this.patternIndex;
@@ -1117,11 +1142,9 @@ function createParticle(unit, target, sizeFactor, life, speed, count){
 // 回転する四角形の色：ショットの色、伸縮する青い楕円：常時HP回復、みたいな。オレンジの六角形でHP表示とか面白そう。
 
 class SelfUnit{
-	constructor(){
+	constructor(weaponData){
     this.isPlayer = true; // プレイヤーかどうか。fireコマンドの分岐に使う。
 		this.position = createVector(0, 0);
-    //this.weapon = []; // 武器庫
-    //this.fire = undefined; // 関数を入れる
     this.collisionFlag = PLAYER; // 衝突フラグ
     this.shotCollisionFlag = PLAYER_BULLET; // ショットはPLAYER_BULLET.
     this.collider = new CircleCollider();
@@ -1135,38 +1158,12 @@ class SelfUnit{
     this.healCount = 0;     // ヒールカウントシステム。キー入力の際に+1され、maxに達するとHPが1増える
     this.maxHealCount = 20; // maxの値
     this.vanishFlag = false;
-    this.prepareWeapon();
+    this.prepareWeapon(weaponData);
 		this.initialize();
 	}
-  prepareWeapon(){
-    // ここ改良したいわね・・ていうか自身のshotActionとかshotShapeとかも同時に切り替わるようにできないかな。
-    // つまり用意すべきはSeedのようなものであって、fireの単純なメソッドではない・・と。
-    // レーザー撃ちたいんだよう。
-    // x, yはあとで自分のを追加する。
-    // これをセットする関数を用意して・・
-    // fireを改造してプレイヤーの場合はシフトキー押さないとactionが進まないようにした。これでOK.
-    // いろんなショットを自由自在に放てるようになる。なんならブロック組み合わせるようにして・・・
-    let mySeed0 = {
-      // default.
-      action:{
-        main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
-      },
-      fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
-    };
-    // スプラッシュガン（嘘です）
-    // レーザー撃ってみよう。
-    let mySeed1 = {
-      shotSpeed:0.1, color:"dkskblue",
-      action:{
-        main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:60}, {loop:INF, back:2}],
-        laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
-                   {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
-                   {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
-        calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
-      }
-    };
-    const myPtn0 = parsePatternSeed(mySeed0);
-    const myPtn1 = parsePatternSeed(mySeed1);
+  prepareWeapon(weaponData){
+    const myPtn0 = parsePatternSeed(weaponData[0]);
+    const myPtn1 = parsePatternSeed(weaponData[1]);
     this.ptnArray.push(myPtn0); // ptnArrayには攻撃パターンが色々入っててシフトキーで変更できる予定。
     this.ptnArray.push(myPtn1);
     // 具体的には各種decorate処理及びactionの差し替え。
@@ -1174,9 +1171,6 @@ class SelfUnit{
   }
 	initialize(){
     // action関連はsetPattern内で行う。
-    //this.action = [];
-    //this.actionIndex = 0;
-    //this.counter.initialize();
     this.ptnIndex = 0;
     this.setPattern(this.ptnArray[0]); // ここは実行中にもあれこれやるってことで・・
     // プレイヤーの位置はここで。パターンチェンジで位置はいじらないので。
@@ -1259,12 +1253,6 @@ class SelfUnit{
   }
   execute(){
     if(this.vanishFlag){ return; }
-    // 主にfireなど。
-    // if(this.wait > 0){ this.wait--; }
-    // if(keyIsDown(32) && this.wait === 0){
-    //  this.fire(this);
-    //  this.wait = 4;
-    // }
     // アクションの実行（処理が終了しているときは何もしない）（vanish待ちのときも何もしない）
     if(this.action.length > 0 && this.actionIndex < this.action.length){
       let debug = 0; // デバッグモード
@@ -1298,7 +1286,6 @@ class SelfUnit{
 		strokeWeight(2);
 		quad(x + c, y + s, x - s, y + c, x - c, y - s, x + s, y - c);
     noStroke();
-    //fill(this.bodyColor);
     fill(this.color);
     ellipse(x, y, 10, 10); // 直径10. 半径は5. ここが当たり判定。
     // ライフゲージ。
