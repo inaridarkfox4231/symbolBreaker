@@ -24,6 +24,13 @@ const PLAYER_BULLET = 2;
 const ENEMY = 3;
 const PLAYER = 4;
 
+const DEFAULT_PATTERN_INDEX = 0;
+const STAR_FACTOR = 2.618033988749895; // 1 + 2 * cos(36).
+// cosとsinの0, 72, 144, 216, 288における値
+const COS_PENTA = [1, 0.30901699437494745, -0.8090169943749473, -0.8090169943749473, 0.30901699437494745];
+const SIN_PENTA = [0, 0.9510565162951535, 0.5877852522924732, -0.587785252292473, -0.9510565162951536];
+const ROOT_THREE_HALF = 0.8660254037844386; // √3/2.
+
 // 今のままでいいからとりあえず関数化とか変数化、やる。
 // 解析用グローバル変数
 let isLoop = true;
@@ -43,18 +50,15 @@ const INDENT = 40;
 const AVERAGE_CALC_SPAN = 10;
 const TEXT_INTERVAL = 25;
 
-let unitPool;
-let entity;
-let seedSet = {};
-let seedCapacity = 0; // パターンの総数（中で計算）
-const DEFAULT_PATTERN_INDEX = 0;
-const STAR_FACTOR = 2.618033988749895; // 1 + 2 * cos(36).
-// cosとsinの0, 72, 144, 216, 288における値
-const COS_PENTA = [1, 0.30901699437494745, -0.8090169943749473, -0.8090169943749473, 0.30901699437494745];
-const SIN_PENTA = [0, 0.9510565162951535, 0.5877852522924732, -0.587785252292473, -0.9510565162951536];
-const ROOT_THREE_HALF = 0.8660254037844386; // √3/2.
+let unitPool;  // unit用のオブジェクトプール
+let entity;    // ノード。
 
-//let testCannon;
+function createSystem(w, h){
+  let _system = new System();
+  window["entity"] = _system;
+  window["areaWidth"] = w;
+  window["areaHeight"] = h;
+}
 
 function preload(){
   /* NOTHING */
@@ -93,7 +97,7 @@ function setup(){
 
   entity.createPlayer(weaponData);
 
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{short:"waygun", count:3}, {short:"waygun", count:5},
@@ -102,10 +106,10 @@ function setup(){
     },
     short:{waygun:[{fire:"waygun", count:"$count"}, {wait:4}, {shotDirection:["add", 5]}]},
     fireDef:{waygun:{nway:{count:"$count", interval:20}}}
-  };
+  })
 
   // デモ画面1. 90°ずつ回転するやつ。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "way3burst"]}, {fire:"rad2"}, {wait:8}, {loop:10, back:2}, {wait:32},
@@ -114,11 +118,11 @@ function setup(){
       fade:[{vanish:60}]
     },
     fireDef:{way3:{nway:{count:3, interval:90}}, rad2:{radial:{count:2}}}
-  };
+  })
 
   // 新しいcircularの実験中。FALさんの4を書き直し。
   // shotDirectionの初期設定は撃ちだした瞬間の進行方向。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "sweeping"]}, {fire:"rad2"}],
@@ -127,13 +131,13 @@ function setup(){
     },
     fireDef:{rad2:{radial:{count:2}}},
     behaviorDef:{circ:["circular", {bearing:-3}]}
-  };
+  })
 
   // FALさんの8を書き直し。
   // followとかbendとか面倒な事をしない場合、射出方向は撃ちだしたときのshotDirection(この場合0)を
   // radialで回転させたものに、要するに配置時の中心から外側への方向。それが固定されたままくるくる回る仕組み。
   // それがあのthis.bearingの意味だとすればこれでよいのだろうね。(つまり各unitのshotDirectionは固定！)
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "flower"]}, {fire:"set"}],
@@ -142,10 +146,10 @@ function setup(){
     },
     fireDef:{set:{x:120, y:0, radial:{count:16}}, way2:{nway:{count:2, interval:120}}},
     behaviorDef:{circ:["circular", {bearing:0.5}]}
-  };
+  })
 
   // FALさんの13を書き直し。バリケード。もう過去には戻れない・・
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "barricade"]}, {fire:"set"}],
@@ -154,12 +158,12 @@ function setup(){
     },
     fireDef:{set:{x:120, y:0, radial:{count:3}}, rad4:{radial:{count:4}}},
     behaviorDef:{circ:["circular", {bearing:1}]}
-  };
+  })
 
   // FALさんの17書き直し。これで最後。radiusDiffを使うと螺旋軌道を実現できる。
   // 射出方向はその時の親→自分ベクトルに+15または-15したもの。
   // いぇーい＾＾
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "scatter"]}, {fire:"set"}, {wait:120},
@@ -176,11 +180,11 @@ function setup(){
     fireDef:{set:{x:50, y:0, radial:{count:2}}},
     behaviorDef:{spiral:["circular", {bearing:1.5, radiusDiff:1}],
                  spiralInv:["circular", {bearing:-1.5, radiusDiff:1}]}
-  };
+  })
 
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.2, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "fire"]},
@@ -191,10 +195,10 @@ function setup(){
             {fire:"way20"}, {wait:4}, {loop:20, back:2}, {vanish:1}]
     },
     fireDef:{way20:{nway:{count:13, interval:8}}, rad2:{radial:{count:2}}}
-  };
+  })
 
   // ランダムに9匹？
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:-0.1,
     action:{
       main:[{hide:true}, {shotAction:["set", "fireGo"]}, {shotShape:"squareMiddle"}, {shotColor:"grey"},
@@ -209,10 +213,10 @@ function setup(){
                  {fire:""}, {wait:16}, {loop:9, back:3}]
     },
     fireDef:{way3:{nway:{count:3, interval:45}}}
-  };
+  })
 
   // デモ画面のカミソリrad8が4ずつ方向逆転するやつ
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:1, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{short:"routine", dirDiff:4}, {short:"routine", dirDiff:-4}, {loop:INF, back:-1}]
@@ -221,10 +225,10 @@ function setup(){
       routine:[{fire:"rad8"}, {shotDirection:["add", "$dirDiff"]}, {wait:8}, {loop:4, back:3}, {wait:16}]
     },
     fireDef:{rad8:{radial:{count:8}}}
-  };
+  })
 
   // 折り返して15匹、パターンを変える。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.2, y:0, speed:4, direction:0, shotSpeed:8, shotDirection:90, bgColor:"plorange",
     action:{
       main:[{hide:true}, {shotShape:"squareMiddle"}, {shotColor:"orange"},
@@ -244,10 +248,10 @@ function setup(){
     },
     fireDef:{way3:{nway:{count:3, interval:45}},
              lineway3:{nway:{count:5, interval:40}, line:{count:3, upSpeed:0.2}}}
-  };
+  })
 
   // 上下に4発ずつline飛ばして止めてから90°方向に8line飛ばして消滅するパターン
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:1, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "lin8"]}, {short:"linshot", angle:90}, {short:"linshot", angle:-90},
@@ -258,10 +262,10 @@ function setup(){
     fireDef:{lin4:{line:{count:4, upSpeed:1}, shotDirOption:["rel", "$angle"]},
              lin8:{line:{count:8, upSpeed:0.5}}
     }
-  };
+  })
 
   // 13方向wayで角度10°でaim5で5lineを60間隔、3line2wayを90間隔で放つ感じ。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.1, shotSpeed:4, collisionFlag:ENEMY,
     action:{
       main:[{aim:0}, {fire:"weapon1"}, {wait:30}, {aim:0}, {fire:"weapon2"}, {wait:40},
@@ -270,10 +274,10 @@ function setup(){
     fireDef:{weapon1:{nway:{count:13, interval:8}, line:{count:5, upSpeed:0.2}},
              weapon2:{nway:{count:[13, 2], interval:[8, 2]}, line:{count:3, upSpeed:0.2}}
     }
-  };
+  })
 
   // 敵がいっぱい
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:-0.1, y:0.1,
     action:{
       main:[{hide:true}, {shotShape:"squareMiddle"},
@@ -294,10 +298,10 @@ function setup(){
       way5:{nway:{count:5, interval:20}, line:{count:3, upSpeed:0.5}},
       way3:{nway:{count:3, interval:10}}
     }
-  };
+  })
 
   // 何がしたいのか分からなくなってきた
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     bgColor:"plgreen", collisionFlag:ENEMY,
     x:0.5, y:0.05, shotSpeed:3, shotBehavior:["brAc1"], color:"green", shotColor:"dkgreen",
     action:{
@@ -308,11 +312,11 @@ function setup(){
     behaviorDef:{
       brAc1:["brakeAccell", {threshold:60, friction:0.01, accelleration:0.1}]
     }
-  };
+  })
 
   // カーブを使ってみる
   // 設定ミスでdamageがINFになってたのを修正した。まあいいや・・気を付けないとね。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.1, shotSpeed:200, collisionFlag:OFF, shotCollisionFlag:OFF,
     action:{
       main:[{hide:true}, {shotDirection:["set", 0]}, {shotAction:["set", "right"]}, {fire:""},
@@ -331,7 +335,7 @@ function setup(){
     },
     fireDef:{way3:{nway:{count:3, interval:20}}},
     behaviorDef:{curve1:["curve", {a:1, b:4, c:3}], curve2:["curve", {a:-1, b:-4, c:3}]}
-  }
+  })
 
   // なんかx, yでformationのショートカット作ってあったの忘れてた（馬鹿？）。で、ランダム指定できるの？
   // shotDirectionをデフォルトにすれば絶対指定で普通にあれ、そうなるよ。
@@ -341,7 +345,7 @@ function setup(){
   // 何パターン追加してんの？？？？
   // ボスなんか作ってる場合か
   // 作るときだけ色や形指定することって出来ないのかなとか。テンポラリー的な？
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0, y:-0.1, shotSpeed:2,
     action:{
       main:[{hide:true}, {short:"square", color:"red"},
@@ -405,21 +409,21 @@ function setup(){
       ways:{nway:{count:"$count", interval:"$interval"}},
       lines:{nway:{count:"$waycount", interval:"$interval"}, line:{count:"$linecount", upSpeed:"$up"}}
     }
-  };
+  })
 
   // 長方形出してから自滅。
   // せっかくだからsignal使ってみる。できた！面白ぇ！！！
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, shotShape:"rectSmall", shotDirection:90, shotSpeed:4, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "bendto90"]},
             {fire:""}, {wait:4}, {shotDirection:["add", 4]}, {loop:12, back:-1}, {vanish:1}],
       bendto90:[{signal:"vanish"}, {direction:["set", 90]}]
     }
-  };
+  })
 
   // 課題1: parentがやられたら破裂。成功。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY, shotDirection:90, shotSpeed:4,
     shotShape:"wedgeMiddle", shotColor:"red", color:"dkred",
     action:{
@@ -429,22 +433,22 @@ function setup(){
              {aim:5}, {fire:"rad8"}, {vanish:1}]
     },
     fireDef:{rad8:{radial:{count:8}}}
-  };
+  })
 
   // 課題2: 自機のsizeの5倍以内に近付いたらaimしてぎゅーん。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, collisionFlag:ENEMY, shotDirection:90, shotSpeed:1, shotColor:"red", color:"dkred",
     action:{
       main:[{shotAction:["set", "raid"]},
             {shotDirection:["add", 10]}, {fire:""}, {wait:32}, {loop:INF, back:3}],
       raid:[{signal:"approach"}, {direction:["aim", 0]}, {speed:["set", 8, 30]}]
     }
-  };
+  })
 
   // 課題3: 敵が、倒れたときに自機狙いを3発発射するやつ。
   // signal:"vanish", follow:trueで自動的に親の位置に移動する。
   // 迫力がないので8発にしました。こら
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0, y:0.1, shotColor:"green", shotShape:"squareMiddle", shotSpeed:1,
     action:{
       main:[{hide:true}, {shotAction:["set", "dieAndShot"]},
@@ -457,19 +461,19 @@ function setup(){
             {aim:0}, {fire:""}, {wait:8}, {loop:8, back:3}, {vanish:1}]
     },
     fireDef:{set:{x:"$x", y:"$y", bend:90}}
-  };
+  })
   // 課題4: 壁で3回反射したらそのまま直進して消える。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.2, collisionFlag:ENEMY, shotSpeed:4,
     action:{
       main:[{shotAction:["set", "ref3"]}, {aim:0}, {fire:"rad32"}, {wait:240}, {loop:INF, back:3}],
       ref3:[{signal:"reflect"}, {loop:3, back:1}]
     },
     fireDef:{rad32:{radial:{count:32}}}
-  };
+  })
 
   // ディレイに問題があった（updateからexecuteを切り離した）ので修正。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.1, y:0.1, shotSpeed:4, shotDirection:90, speed:8, shotDelay:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "scatter"]}, {shotDelay:["add", -10]},
@@ -477,11 +481,11 @@ function setup(){
       scatter:[{shotDirection:["set", 0]}, {fire:""}, {wait:4}, {shotDirection:["add", 10]},
             {loop:36, back:3}]
     }
-  };
+  })
 
   // 敵を倒すと画面外からbulletが襲ってくる(とりあえず上方)
   // こわ。かわしてももう一回狙ってくる。まじこわ。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.1, shotDirection:-90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "hideWait"]}, {fire:"trap"}, {shotAction:["clear"]},
@@ -492,10 +496,10 @@ function setup(){
                 {speed:["set", 8, 120]}, {direction:["aim", 0]}]
     },
     fireDef:{trap:{formation:{type:"frontVertical", distance:64, interval:5, count:96}}}
-  };
+  })
 
   // STAGE1
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0, y:0, bgColor:"plred",
     action:{
       main:[{hide:true}, {wait:120},
@@ -586,11 +590,11 @@ function setup(){
              setSoldier:{formation:{type:"frontVertical", distance:40, count:96, interval:5}},
              rad5:{radial:{count:5}}
     },
-  };
+  })
 
   // doubleWedgeの確認
   // さらに新しいcircularの実験、割とうまく行ったね。移動するユニットの周りの回転軌道。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4, shotDirection:90,
     shape:"doubleWedgeLarge", color:"dkblue",
     action:{
@@ -601,11 +605,11 @@ function setup(){
     },
     fireDef:{rad4:{radial:{count:4}}},
     behaviorDef:{circ:["circular", {bearing:1}]}
-  };
+  })
 
   // 楕円軌道で実験したいわね。できたよ。
   // 親の位置から発射っていうのは実装したところであんま応用効かなさそうね。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.2, collisionFlag:ENEMY, color:"dkgrey", bgColor:"plgrey",
     action:{
       main:[{shotShape:"squareMiddle"}, {shotColor:"grey"}, {shotCollisionFlag:ENEMY},
@@ -627,10 +631,10 @@ function setup(){
     },
     fireDef:{set:{x:180, y:0}},
     behaviorDef:{ellipse:["circular", {bearing:1.5, ratioXY:0.4}]}
-  };
+  })
 
   // freeFallBehavior.
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY, shotBehavior:["fall"],
     shape:"squareLarge", color:"bossBlue", shotShape:"wedgeSmall", shotColor:"bossBlue",
     action:{
@@ -642,7 +646,7 @@ function setup(){
                   {aim:5}, {fire:""}, {wait:2}, {loop:30, back:2}, {vanish:1}]
     },
     behaviorDef:{fall:["freeFall", {}]}
-  };
+  })
 
   // レーザー1
   // 案の定当たり判定で失敗していますね。わぁい。修正修正！
@@ -653,7 +657,7 @@ function setup(){
   // 自機が放つ場合にそれを適用したらいいかも。やばい・・パソコン・・
   // frameOutのsignal使って、ヘッドは画面外で速さ0.1, テールは画面外で消滅するようにした。
   // さらにbindで親が（テールが）消えたら同時に消えるようにした。完璧。
-  seedSet["seed" + (seedCapacity++)] = {
+  entity.addPatternSeed({
     x:0.2, y:0.1, collisionFlag:ENEMY, shotSpeed:4, speed:4.8,
     color:"bossBlue", shape:"squareLarge", shotShape:"wedgeMiddle", shotColor:"dkblue",
     action:{
@@ -666,7 +670,7 @@ function setup(){
       calm:[{bind:true}, {speed:["set", 4, 60]}, {signal:"frameOut"}, {speed:["set", 0.1]}]
     },
     fireDef:{way:{nway:{count:"$count", interval:20}}}
-  };
+  })
 
   entity.setPattern(DEFAULT_PATTERN_INDEX);
 
@@ -807,7 +811,7 @@ function drawConfig(){
   fill(220);
   rect(AREA_WIDTH, 0, 160, AREA_HEIGHT);
   const cur = entity.getPatternIndex();
-  for(let i = 0; i < seedCapacity; i++){
+  for(let i = 0; i < entity.seedCapacity; i++){
     const x = AREA_WIDTH + Math.floor(i / 15) * 40;
     const y = (i % 15) * 40;
     if(i !== cur){
@@ -846,7 +850,14 @@ class System{
     this.patternIndex = 0;
     this._qTree = new LinearQuadTreeSpace(AREA_WIDTH, AREA_HEIGHT, 3);
     this._detector = new CollisionDetector();
+    this.seedArray = []; // Systemに持たせました。
+    this.seedCapacity = 0;
 	}
+  addPatternSeed(seed){
+    this.seedArray.push(seed);
+    this.seedCapacity++;
+    // なんかデフォルトを設定するとかここでできそうな。たとえばnwayのとか。radialとか。
+  }
   createPlayer(weaponData){
     this.player = new SelfUnit(weaponData);
   }
@@ -855,8 +866,8 @@ class System{
   }
   setPattern(newPatternIndex){
     // パターンを作る部分をメソッド化
-    if(seedSet["seed" + newPatternIndex] === undefined){ return; } // 存在しない時。
-    let seed = seedSet["seed" + newPatternIndex];
+    if(this.seedArray[newPatternIndex] === undefined){ return; } // 存在しない時。
+    let seed = this.seedArray[newPatternIndex];
     // 背景色
     if(seed.hasOwnProperty("bgColor")){
       this.backgroundColor = this.drawColor[seed.bgColor];
