@@ -704,6 +704,7 @@ function setup(){
     behaviorDef:{fall:["freeFall", {}]}
   })
 
+  // 反映されない？
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
