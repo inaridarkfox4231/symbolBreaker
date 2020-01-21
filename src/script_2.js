@@ -8,6 +8,11 @@
 // Particleは10個くらいの四角形（中身すっからかん）を色付けてふちだけのやつ回転しながら
 // ランダムで方向決めてスピードは4から0に減らす感じでゆっくりとばすみたいな。
 
+/*
+あとはこう書くだけ。
+<script src="https://inaridarkfox4231.github.io/gameData/bulletLang1.js"></script>
+*/
+
 "use strict";
 
 const INF = Infinity; // 長いので
@@ -26,7 +31,6 @@ function setup(){
   // unitPoolはあっちでしか使ってないのでこれでいいはず・・・
   createCanvas(AREA_WIDTH, AREA_HEIGHT);
   angleMode(DEGREES);
-  textSize(16);
 
   //unitPool = new ObjectPool(() => { return new Unit(); }, 1024);
 
@@ -42,6 +46,7 @@ function setup(){
     fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
   };
   // レーザー撃ってみよう。60フレーム経たないと再発射できない。
+
   weaponData[weaponCapacity++] = {
     shotSpeed:0.1, color:"dkskblue",
     action:{
@@ -52,6 +57,7 @@ function setup(){
       calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
     }
   };
+
 
   // ここで第二引数は通常PLAYERになってるんだけど、OFFにすることでプレイヤーが無敵になる。そういうオプション。
   // mySystem.createPlayer(weaponData, OFF);

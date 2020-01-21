@@ -373,10 +373,11 @@ class SelfUnit{
 		this.initialize();
 	}
   prepareWeapon(weaponData){
-    const myPtn0 = parsePatternSeed(weaponData[0]);
-    const myPtn1 = parsePatternSeed(weaponData[1]);
-    this.ptnArray.push(myPtn0); // ptnArrayには攻撃パターンが色々入っててシフトキーで変更できる予定。
-    this.ptnArray.push(myPtn1);
+    for(let i = 0; i < weaponData.length; i++){
+      const myPtn = parsePatternSeed(weaponData[i]);
+      this.ptnArray.push(myPtn);
+    }
+    // shiftKeyで変更。
     // 具体的には各種decorate処理及びactionの差し替え。
     // 追加プロパティ：action, actionIndex, counter, ptnArray, ptnIndex. 廃止プロパティ：weapon, fire, wait.
   }
@@ -696,29 +697,20 @@ class Unit{
     this.vanishFlag = true;
   }
   hit(unit){
-    switch(this.collisionFlag){
-      case ENEMY_BULLET:
-        //console.log("I'm enemy bullet!");
-        // 小さめのパーティクル
-        if(!this.hide){
-          if(this.collider.type === "circle"){ createParticle(this, this, 2.0, 30, 4, 5); }
-          else{ /* レーザー */ createParticle(this, unit, 2.0, 15, 4, 2); }
-        }
-        if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
-        break;
-      case PLAYER_BULLET:
-        //console.log("I'm player bullet!");
-        // 小さめのパーティクル
-        if(!this.hide){
-          if(this.collider.type === "circle"){ createParticle(this, this, 2.0, 30, 4, 5); }
-          else{ /* レーザー */ createParticle(this, unit, 2.0, 15, 4, 2); }
-        }
-        if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
-        break;
-      case ENEMY:
-        //console.log("I'm enemy! my life:" + this.life + ", frameCount:" + frameCount);
-        // HPを減らして0になるようならvanishさせる。unitからダメージ量を取得する。
-        this.lifeUpdate(-unit.damage); break;
+    const flag = this.collisionFlag;
+    if(flag === ENEMY_BULLET || flag === PLAYER_BULLET){
+      if(this.collider.type === "circle"){
+        // サークル
+        createParticle(this, this, 2.0, 30, 4, 5);
+      }else{
+        // レーザーはスリップなので小さくする
+        createParticle(this, unit, 2.0, 15, 4, 2);
+      }
+      if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
+      return;
+    }else if(flag === ENEMY || flag === PLAYER){
+      this.lifeUpdate(-unit.damage);
+      return;
     }
   }
   execute(){

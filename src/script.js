@@ -649,6 +649,41 @@ function setup(){
     fireDef:{way:{nway:{count:"$count", interval:20}}}
   })
 
+  // 以前作ったやつー
+  // rainbow.
+  mySystem.addPatternSeed({
+    x:0.5, y:0.1, collisionFlag:ENEMY, shotDirection:90, color:"dkgrey", shotSpeed:4,
+    shotShape:"wedgeMiddle", bgColor:"plgrey",
+    action:{
+      main:[{shotAction:["set", "split2"]},
+            {short:"rainbow", type:"", dirDiff:360/7},
+            {shotDirection:["add", 4]}, {wait:4}, {loop:8, back:23}, {wait:32}, {loop:4, back:25},
+            {shotSpeed:["set", 2]}, {aim:0},
+            {short:"rainbow", type:"way6", dirDiff:360/7},
+            {shotSpeed:["set", 4]}, {wait:64},
+            {short:"rainbow", type:"", dirDiff:360/7},
+            {shotDirection:["add", -4]}, {wait:4}, {loop:8, back:23}, {wait:32}, {loop:4, back:25},
+            {shotSpeed:["set", 2]}, {aim:0},
+            {short:"rainbow", type:"way6", dirDiff:360/7},
+            {shotSpeed:["set", 4]}, {wait:64},
+            {loop:INF, back:-2}],
+      split2:[{speed:["set", 1, 60]}, {fire:"way2"}, {vanish:1}],
+    },
+    short:{
+      rainbow:[{shotColor:"red"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"orange"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"yellow"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"ltgreen"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"blue"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"dkblue"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]},
+               {shotColor:"purple"}, {fire:"$type"}, {shotDirection:["add", "$dirDiff"]}],
+    },
+    fireDef:{way2:{nway:{count:2, interval:30}}, way6:{nway:{count:6, interval:8}}}
+  })
+
+  // 意図的にPLAYERフラグを持つunitを生成して同士討ちさせる実験
+
+
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
 }
