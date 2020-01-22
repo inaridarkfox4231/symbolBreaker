@@ -280,6 +280,7 @@ class System{
         .registColor("green", color(34, 177, 76), 1, 1)
         .registColor("plgreen", color(108, 227, 145), 1, 1)
         .registColor("brown", color(128, 64, 0), 1, 1)
+        .registColor("plbrown", color(215, 179, 159), 1, 1)
         .registColor("purple", color(163, 73, 164), 1, 1)
         .registColor("dkpurple", color(95, 41, 95), 1, 1)
         .registColor("plorange", color(255, 191, 149), 1, 1)
@@ -291,6 +292,7 @@ class System{
         .registColor("grey", color(128), 1, 1)
         .registColor("ltgreen", color(181, 230, 29), 1, 1)
         .registColor("pink", color(255, 55, 120), 1, 1)
+        .registColor("bossPink", color(255, 26, 100), 5, 50)
         .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
         .registColor("bossRed", color(74, 6, 10), 5, 50); // ボス用のワインレッド（1面のボス）
   }
@@ -319,7 +321,8 @@ class System{
         .registShape("laserSmall", new DrawLaserShape(8))
         .registShape("laserMiddle", new DrawLaserShape(16))
         .registShape("laserLarge", new DrawLaserShape(24))
-        .registShape("laserHuge", new DrawLaserShape(48));
+        .registShape("laserHuge", new DrawLaserShape(48))
+        .registShape("cherryLarge", new DrawCherryShape(30));
   }
 }
 
@@ -1035,6 +1038,34 @@ class DrawDoubleWedgeShape extends DrawShape{
              x,     y, x - 0.5 * c - ROOT_THREE_HALF * s, y - 0.5 * s + ROOT_THREE_HALF * c);
     quad(x - c, y - s, x + 0.5 * c + ROOT_THREE_HALF * s, y + 0.5 * s - ROOT_THREE_HALF * c,
              x,     y, x + 0.5 * c - ROOT_THREE_HALF * s, y + 0.5 * s + ROOT_THREE_HALF * c);
+    unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
+  }
+}
+
+// DrawCherryShape.
+// 桜っぽい感じのやつ。敵専用。1面のボス。typeはcircleでsizeは10, 20, 30, 60で
+// 基礎lifeはそれぞれ8, 16, 24, 48（0.8倍）
+class DrawCherryShape extends DrawShape{
+  constructor(size){
+    super();
+    this.colliderType = "circle";
+    this.size = size;
+    this.life = size * 0.8;
+  }
+  set(unit){
+    // colliderInitialize.
+    unit.collider.update(unit.position.x, unit.position.y, this.size); // 本来の大きさで。
+    unit.drawParam = {rotationAngle:0, rotationSpeed:4};
+  }
+  draw(unit){
+    const {x, y} = unit.position;
+    const direction = unit.drawParam.rotationAngle;
+    const c = cos(direction) * this.size * 0.75;
+    const s = sin(direction) * this.size * 0.75;
+    for(let i = 0; i < 5; i++){
+      arc(x + c * COS_PENTA[i] - s * SIN_PENTA[i], y + c * SIN_PENTA[i] + s * COS_PENTA[i],
+          this.size, this.size, 45 + 72 * i + direction, 315 + 72 * i + direction);
+    }
     unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
   }
 }

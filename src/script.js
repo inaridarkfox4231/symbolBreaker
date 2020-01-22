@@ -704,7 +704,13 @@ function setup(){
     behaviorDef:{fall:["freeFall", {}]}
   })
 
-  // 反映されない？
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4,
+    shape:"cherryLarge", shotShape:"wedgeMiddle", shotColor:"green", bgColor:"plbrown", color:"bossPink",
+    action:{
+      main:[{fire:""}, {wait:8}, {shotDirection:["add", 12]}, {loop:INF, back:-1}]
+    }
+  })
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
