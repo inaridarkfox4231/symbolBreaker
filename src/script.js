@@ -704,20 +704,39 @@ function setup(){
     behaviorDef:{fall:["freeFall", {}]}
   })
 
+  // CherryBlossom.
   mySystem.addPatternSeed({
-    x:0.5, y:0.2, collisionFlag:ENEMY, shotSpeed:8,
-    shape:"cherryLarge", shotShape:"wedgeMiddle", shotColor:"killgreen", bgColor:"plbrown", color:"bossPink",
+    x:0.5, y:0.2, collisionFlag:ENEMY,
+    shape:"cherryLarge", shotShape:"wedgeMiddle", shotColor:"dkgreen", bgColor:"plbrown", color:"bossPink",
     action:{
-      main:[{shotDirection:["set", 45]}, {shotAction:["set", "rad37"]},
-            {fire:"rad4"}, {wait:60}, {shotAction:["clear"]},
+      main:[{shotSpeed:["set", 4]}, {shotDirection:["set", 45]}, {shotAction:["set", "rad37"]},
+            {fire:"rad4"}, {wait:120}, {shotAction:["clear"]},
             {shotDirection:["set", 60]}, {fire:""}, {shotDirection:["add", 6]}, {wait:8}, {loop:10, back:3},
             {wait:30},
             {shotDirection:["set", 120]}, {fire:""}, {shotDirection:["add", -6]}, {wait:8}, {loop:10, back:3},
             {wait:30},
+            {shotSpeed:["set", 8]},
+            {shotDirection:["set", -15]}, {shotAction:["set", "trap135"]}, {fire:""},
+            {shotDirection:["set", 195]}, {shotAction:["set", "trap45"]}, {fire:""}, {wait:240},
+            {speed:["set", 4]}, {direction:["set", 90]}, {wait:20}, {speed:["set", 0]},
+            {shotColor:"killgreen"},
+            {shotAction:["set", "star5"]}, {fire:"rad5"}, {wait:300},
+            {speed:["set", 4]}, {direction:["set", -90]}, {wait:20}, {speed:["set", 0]},
+            {shotColor:"dkgreen"},
             {loop:INF, back:-1}],
-      rad37:[{speed:["set", 1, 30]}, {aim:0}, {shotSpeed:["set", 4]}, {fire:"rad37"}, {vanish:1}]
+      rad37:[{speed:["set", 1, 60]}, {aim:0}, {shotSpeed:["set", 4]}, {fire:"rad37"}, {vanish:1}],
+      trap135:[{short:"trapSeed", fireDir:135}],
+      trap45:[{short:"trapSeed", fireDir:45}],
+      trap:[{shotDelay:["set", 60]}, {speed:["set", 8]},
+            {shotDirection:["add", 20]}, {fire:""}, {wait:1}, {loop:INF, back:3}],
+      star5:[{speed:["set", 2, 30]}, {shotSpeed:["set", 6]}, {hide:true},
+             {fire:"rad5"}, {wait:6}, {loop:15, back:2}, {vanish:1}],
     },
-    fireDef:{rad4:{radial:{count:4}}, rad37:{radial:{count:37}}}
+    short:{
+      trapSeed:[{speed:["set", 1, 60]}, {shotDirection:["set", "$fireDir"]}, {shotAction:["set", "trap"]},
+               {fire:""}, {vanish:1}]
+    },
+    fireDef:{rad4:{radial:{count:4}}, rad37:{radial:{count:37}}, rad5:{radial:{count:5}}}
   })
 
   // めんどうね。
