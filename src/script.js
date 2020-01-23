@@ -705,20 +705,50 @@ function setup(){
   })
 
   mySystem.addPatternSeed({
-    x:0.5, y:0.5, collisionFlag:ENEMY, shotSpeed:4,
+    x:0.5, y:0.2, collisionFlag:ENEMY, shotSpeed:8,
     shape:"cherryLarge", shotShape:"wedgeMiddle", shotColor:"killgreen", bgColor:"plbrown", color:"bossPink",
     action:{
-      main:[{fire:""}, {wait:8}, {shotDirection:["add", 12]}, {loop:INF, back:-1}]
-    }
+      main:[{shotDirection:["set", 45]}, {shotAction:["set", "rad37"]},
+            {fire:"rad4"}, {wait:60}, {shotAction:["clear"]},
+            {shotDirection:["set", 60]}, {fire:""}, {shotDirection:["add", 6]}, {wait:8}, {loop:10, back:3},
+            {wait:30},
+            {shotDirection:["set", 120]}, {fire:""}, {shotDirection:["add", -6]}, {wait:8}, {loop:10, back:3},
+            {wait:30},
+            {loop:INF, back:-1}],
+      rad37:[{speed:["set", 1, 30]}, {aim:0}, {shotSpeed:["set", 4]}, {fire:"rad37"}, {vanish:1}]
+    },
+    fireDef:{rad4:{radial:{count:4}}, rad37:{radial:{count:37}}}
   })
 
+  // めんどうね。
   mySystem.addPatternSeed({
     x:0.0, y:0.0, bgColor:"plbrown",
     action:{
-      main:[{set:{x:120, y:-40}}, {deco:{speed:8, direction:90, color:"brown", shape:"squareMiddle"}},
-            {shotAction:["set", "enemy1"]}, {fire:""}, {wait:60}],
+      main:[{deco:{speed:8, direction:90, color:"brown", shape:"squareMiddle"}},
+            {shotAction:["set", "enemy1"]},
+            {set:{x:[80, 160], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
+            {set:{x:[320, 400], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
+            {set:{x:[200, 280], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
+            {set:{x:120, y:-40}}, {speed:["set", 4]},
+            {shotAction:["set", "enemy2"]},
+            {fire:""}, {wait:10}, {loop:7, back:2},
+            {direction:["set", 180]}, {set:{x:320, y:-40}},
+            {fire:""}, {wait:10}, {loop:6, back:2},
+            {speed:["set", 0]}],
       enemy1:[{deco:{speed:6, color:"brown", shape:"wedgeSmall"}},
-              {speed:["set", 1, 30]}, {aim:0}, {fire:""}, {wait:8}, {loop:10, back:2}]
+              {speed:["set", 1, 30]}, {aim:0}, {fire:"nway", c:5, itv:20},
+              {wait:8}, {loop:10, back:3},
+              {wait:60}, {speed:["set", 8, 30]}],
+      enemy2:[{deco:{speed:4, color:"brown", shape:"wedgeSmall"}},
+              {speed:["set", 1, 30]},
+              {aim:0}, {fire:"nwayLine", wc:3, itv:10, lc:3, us:0.5}, {wait:30}, {shotSpeed:["set", 2]},
+              {aim:0}, {fire:"radialLine", rc:15, lc:3, us:0.5}, {wait:30},
+              {speed:["set", 8, 30]}]
+    },
+    fireDef:{nway:{nway:{count:"$c", interval:"$itv"}}, radial:{radial:{count:"$c"}},
+             nwayRadial:{nway:{count:"$wc", interval:"$itv"}, radial:{count:"$rc"}},
+             nwayLine:{nway:{count:"$wc", interval:"$itv"}, line:{count:"$lc", upSpeed:"$us"}},
+             radialLine:{radial:{count:"$rc"}, line:{count:"$lc", upSpeed:"$us"}}
     }
   })
 

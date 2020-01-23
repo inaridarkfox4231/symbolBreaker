@@ -57,9 +57,9 @@ class System{
     this.seedCapacity = 0;
 	}
   addPatternSeed(seed){
+    // なんかデフォルトを設定するとかここでできそうな。たとえばnwayのとか。radialとか。
     this.seedArray.push(seed);
     this.seedCapacity++;
-    // なんかデフォルトを設定するとかここでできそうな。たとえばnwayのとか。radialとか。
   }
   createPlayer(weaponData, flag = PLAYER){
     this.player = new SelfUnit(weaponData, flag);
@@ -2274,6 +2274,7 @@ function interpretCommand(data, command, index){
   }
   if(_type === "set"){
     // 位置をいじる。{set:{x:100, y:40}}なら強制的に(100, 40)に移動する。
+    // 配列を使うとランダムも可能
     result.x = command.set.x; result.y = command.set.y; return result;
   }
   if(_type === "deco"){
@@ -2489,7 +2490,7 @@ function execute(unit, command){
     return true; // ループは抜けない
   }
   if(_type === "set"){
-    unit.setPosition(command.x, command.y);
+    unit.setPosition(getNumber(command.x), getNumber(command.y));
     unit.actionIndex++;
     return true; // ループは抜けない
   }
