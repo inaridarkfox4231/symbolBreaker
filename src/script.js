@@ -712,6 +712,16 @@ function setup(){
     }
   })
 
+  mySystem.addPatternSeed({
+    x:0.0, y:0.0, bgColor:"plbrown",
+    action:{
+      main:[{set:{x:120, y:-40}}, {deco:{speed:8, direction:90, color:"brown", shape:"squareMiddle"}},
+            {shotAction:["set", "enemy1"]}, {fire:""}, {wait:60}],
+      enemy1:[{deco:{speed:6, color:"brown", shape:"wedgeSmall"}},
+              {speed:["set", 1, 30]}, {aim:0}, {fire:""}, {wait:8}, {loop:10, back:2}]
+    }
+  })
+
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
 }

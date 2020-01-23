@@ -2272,6 +2272,20 @@ function interpretCommand(data, command, index){
     // bindをtruefalseにする
     result.flag = command.bind; return result;
   }
+  if(_type === "set"){
+    // 位置をいじる。{set:{x:100, y:40}}なら強制的に(100, 40)に移動する。
+    result.x = command.set.x; result.y = command.set.y; return result;
+  }
+  if(_type === "deco"){
+    // shotプロパティをいじる。{deco:{speed:8, direction:90, color:"grey", shape:"wedgeMiddle"}}とかする。
+    const propNames = ["speed", "direction", "color", "shape"];
+    propNames.forEach((name) => {
+      if(command.deco.hasOwnProperty(name)){
+        result[name] = command.deco[name];
+      }
+    })
+    return result;
+  }
   if(_type === "signal"){
     // signalプロパティにはmodeが入っててそれにより指示が決まる。
     // 基本的に、modeには「それが為されたら次ね」といった内容が入る（消滅したらとか近付いたらとか）
@@ -2473,6 +2487,20 @@ function execute(unit, command){
     unit.bind = command.flag;
     unit.actionIndex++;
     return true; // ループは抜けない
+  }
+  if(_type === "set"){
+    unit.setPosition(command.x, command.y);
+    unit.actionIndex++;
+    return true; // ループは抜けない
+  }
+  if(_type === "deco"){
+    // ショットいろいろ
+    if(command.hasOwnProperty("speed")){ unit.shotSpeed = command.speed; }
+    if(command.hasOwnProperty("direction")){ unit.shotDirection = command.direction; }
+    if(command.hasOwnProperty("color")){ unit.shotColor = entity.drawColor[command.color]; }
+    if(command.hasOwnProperty("shape")){ unit.shotShape = entity.drawShape[command.shape]; }
+    unit.actionIndex++;
+    return true;
   }
   if(_type === "signal"){
     if(command.mode === "vanish"){
