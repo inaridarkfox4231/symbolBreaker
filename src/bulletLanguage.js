@@ -276,11 +276,12 @@ class System{
         .registColor("dkred", color(146, 12, 18), 3, 3)
         .registColor("yellow", color(255, 242, 0), 1, 1)
         .registColor("dkyellow", color(142, 135, 0), 1, 1)
-        .registColor("dkgreen", color(17, 91, 39), 1, 1)
+        .registColor("dkgreen", color(17, 91, 39), 2, 3)
         .registColor("green", color(34, 177, 76), 1, 1)
         .registColor("plgreen", color(108, 227, 145), 1, 1)
         .registColor("brown", color(128, 64, 0), 1, 1)
         .registColor("plbrown", color(215, 179, 159), 1, 1)
+        .registColor("dkbrown", color(103, 65, 44), 2, 3)
         .registColor("purple", color(163, 73, 164), 1, 1)
         .registColor("dkpurple", color(95, 41, 95), 1, 1)
         .registColor("plorange", color(255, 191, 149), 1, 1)
@@ -291,6 +292,7 @@ class System{
         .registColor("plgrey", color(200), 1, 1)
         .registColor("grey", color(128), 1, 1)
         .registColor("ltgreen", color(181, 230, 29), 1, 1)
+        .registColor("killgreen", color(116, 149, 17), 20, 5) // 濃い黄緑
         .registColor("pink", color(255, 55, 120), 1, 1)
         .registColor("bossPink", color(255, 26, 100), 5, 50)
         .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
