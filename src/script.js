@@ -747,13 +747,16 @@ function setup(){
             {shotAction:["set", "enemy1"]},
             {set:{x:[80, 160], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
             {set:{x:[320, 400], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
-            {set:{x:[200, 280], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
+            {set:{x:[200, 280], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:240},
             {set:{x:120, y:-40}}, {speed:["set", 4]},
             {shotAction:["set", "enemy2"]},
             {fire:""}, {wait:10}, {loop:7, back:2},
             {direction:["set", 180]}, {set:{x:320, y:-40}},
             {fire:""}, {wait:10}, {loop:6, back:2},
-            {speed:["set", 0]}],
+            {speed:["set", 0]}, {wait:240},
+            {set:{x:120, y:-60}}, {shotAction:["set", "enemy3"]}, {fire:"radial", c:4}, {wait:180},
+            {set:{x:360, y:-60}}, {fire:"radial", c:4}
+          ],
       enemy1:[{deco:{speed:6, color:"brown", shape:"wedgeSmall"}},
               {speed:["set", 1, 30]}, {aim:0}, {fire:"nway", c:5, itv:20},
               {wait:8}, {loop:10, back:3},
@@ -761,8 +764,12 @@ function setup(){
       enemy2:[{deco:{speed:4, color:"brown", shape:"wedgeSmall"}},
               {speed:["set", 1, 30]},
               {aim:0}, {fire:"nwayLine", wc:3, itv:10, lc:3, us:0.5}, {wait:30}, {shotSpeed:["set", 2]},
-              {aim:0}, {fire:"radialLine", rc:15, lc:3, us:0.5}, {wait:30},
-              {speed:["set", 8, 30]}]
+              {aim:0}, {fire:"radialLine", rc:7, lc:3, us:0.5}, {wait:30},
+              {speed:["set", 8, 30]}],
+      enemy3:[{deco:{speed:5, color:"dkbrown", shape:"wedgeSmall"}},
+              {speed:["set", 8]}, {wait:5}, {direction:["set", 90]},
+              {speed:["set", 1, 30]}, {aim:0}, {fire:"nwayLine", wc:5, itv:20, lc:2, us:1},
+              {wait:30}, {aim:0}, {fire:"radialLine", rc:13, lc:3, us:1}, {speed:["set", 8, 30]}]
     },
     fireDef:{nway:{nway:{count:"$c", interval:"$itv"}}, radial:{radial:{count:"$c"}},
              nwayRadial:{nway:{count:"$wc", interval:"$itv"}, radial:{count:"$rc"}},
@@ -770,6 +777,7 @@ function setup(){
              radialLine:{radial:{count:"$rc"}, line:{count:"$lc", upSpeed:"$us"}}
     }
   })
+
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
