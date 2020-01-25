@@ -743,7 +743,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.0, y:0.0, bgColor:"plbrown",
     action:{
-      main:[{deco:{speed:8, direction:90, color:"brown", shape:"squareMiddle"}},
+      main:[{hide:true}, {deco:{speed:8, direction:90, color:"brown", shape:"squareMiddle"}},
             {shotAction:["set", "enemy1"]},
             {set:{x:[80, 160], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
             {set:{x:[320, 400], y:-40}}, {fire:""}, {wait:10}, {loop:6, back:3}, {wait:120},
@@ -755,8 +755,26 @@ function setup(){
             {fire:""}, {wait:10}, {loop:6, back:2},
             {speed:["set", 0]}, {wait:240},
             {set:{x:120, y:-60}}, {shotAction:["set", "enemy3"]}, {fire:"radial", c:4}, {wait:180},
-            {set:{x:360, y:-60}}, {fire:"radial", c:4}
+            {set:{x:360, y:-60}}, {fire:"radial", c:4}, {wait:180},
+            {set:{x:120, y:-60}}, {shotAction:["set", "enemy4"]}, {fire:"radial", c:8}, {wait:180},
+            {set:{x:360, y:-60}}, {fire:"radial", c:8}, {wait:180},
+            {set:{x:80, y:-60}}, {speed:["set", 4]}, {direction:["set", 0]},
+            {shotAction:["set", "enemy5"]}, {fire:""}, {wait:10}, {loop:8, back:2},
+            {set:{x:400, y:-60}}, {direction:["set", 180]}, {fire:""}, {wait:10}, {loop:9, back:2},
+            {speed:["set", 0]}, {wait:300},
+            {deco:{speed:8, color:"bossBrown", shape:"squareLarge"}},
+            {set:{x:240, y:-60}}, {shotAction:["set", "middleBoss"]}, {fire:""}, {vanish:1}
           ],
+      middleBoss:[{deco:{speed:0, color:"grey", shape:"squareMiddle"}},
+                  {shotAction:["set", "next1"]}, {shotCollisionFlag:OFF}, {fire:""},
+                  {shotAction:["clear"]}, {shotCollisionFlag:ENEMY_BULLET},
+                  {deco:{speed:6, color:"bossBrown", shape:"wedgeMiddle"}},
+                  {speed:["set", 0, 30]}, {aim:0}, {fire:""}, {wait:12}, {loop:3, back:3}],
+      next1:[{set:{x:0, y:0}}, {hide:true}, {signal:"vanish"}, {wait:180},
+             {deco:{speed:6, color:"dkgreen", shape:"squareMiddle"}}, {shotCollisionFlag:ENEMY},
+             {shotAction:["set", "enemy6"]}, {set:{x:120, y:-60}}, {fire:""}, {wait:30},
+             {set:{x:80, y:-60}}, {fire:""}, {wait:30},
+             {set:{x:160, y:-60}}, {fire:""}],
       enemy1:[{deco:{speed:6, color:"brown", shape:"wedgeSmall"}},
               {speed:["set", 1, 30]}, {aim:0}, {fire:"nway", c:5, itv:20},
               {wait:8}, {loop:10, back:3},
@@ -768,16 +786,42 @@ function setup(){
               {speed:["set", 8, 30]}],
       enemy3:[{deco:{speed:5, color:"dkbrown", shape:"wedgeSmall"}},
               {speed:["set", 8]}, {wait:5}, {direction:["set", 90]},
-              {speed:["set", 1, 30]}, {aim:0}, {fire:"nwayLine", wc:5, itv:20, lc:2, us:1},
-              {wait:30}, {aim:0}, {fire:"radialLine", rc:13, lc:3, us:1}, {speed:["set", 8, 30]}]
+              {speed:["set", 1, 30]}, {aim:0}, {fire:"line", c:15, us:0.2},
+              {wait:30}, {aim:0}, {fire:"radialLine", rc:13, lc:3, us:1}, {speed:["set", 8, 30]}],
+      enemy4:[{deco:{speed:4, color:"dkbrown", shape:"wedgeSmall"}},
+              {speed:["set", 8]}, {wait:10}, {direction:["set", 90]},
+              {speed:["set", 1, 30]}, {aim:0}, {fire:"line", c:5, us:0.3},
+              {wait:30}, {aim:0}, {fire:"radial", c:37}, {speed:["set", 8, 30]}],
+      enemy5:[{deco:{speed:4, color:"dkbrown", shape:"wedgeSmall"}},
+              {speed:["set", 1, 40]}, {shotAction:["set", "afterRaid"]}, {aim:0}, {fire:"line", c:20, us:0.2},
+              {wait:30}, {speed:["set", 8, 30]}],
+      enemy6:[{deco:{speed:6, color:"dkgreen", shape:"wedgeMiddle"}},
+              {speed:["set", 1, 60]}, {aim:0}, {fire:""}, {wait:12}, {loop:8, back:3}, {speed:["set", 8, 30]}],
+      afterRaid:[{signal:"vanish"}, {direction:["aim", 0]}]
     },
     fireDef:{nway:{nway:{count:"$c", interval:"$itv"}}, radial:{radial:{count:"$c"}},
+             line:{line:{count:"$c", upSpeed:"$us"}},
              nwayRadial:{nway:{count:"$wc", interval:"$itv"}, radial:{count:"$rc"}},
              nwayLine:{nway:{count:"$wc", interval:"$itv"}, line:{count:"$lc", upSpeed:"$us"}},
              radialLine:{radial:{count:"$rc"}, line:{count:"$lc", upSpeed:"$us"}}
     }
   })
 
+  // 何にも思いつかないので寝る
+  // レーザー工場
+  mySystem.addPatternSeed({
+    x:0.2, y:0.2, bgColor:"plorange", collisionFlag:ENEMY, shotDirection:90, shotSpeed:5,
+    action:{
+      main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:24}, {loop:INF, back:2}],
+      laserUnit:[{hide:true}, {wait:10}, {deco:{speed:8, color:"red", shape:"laserMiddle"}},
+                 {shotAction:["set", "laserHead"]}, {speed:["set", 0]}, {fire:""},
+                 {short:"laserPrepare", wait:30, dir:45, speed:4}],
+      laserHead:[{short:"laserPrepare", wait:30, dir:45, speed:4}]
+    },
+    short:{laserPrepare:[{wait:"$wait"}, {direction:["set", "$dir"]}, {speed:["set", "$speed"]}]}
+  })
+
+  // やっぱ何も思いつかないので死
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 

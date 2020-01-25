@@ -294,6 +294,7 @@ class System{
         .registColor("ltgreen", color(181, 230, 29), 1, 1)
         .registColor("killgreen", color(116, 149, 17), 20, 5) // 濃い黄緑
         .registColor("pink", color(255, 55, 120), 1, 1)
+        .registColor("bossBrown", color(65, 40, 27), 5, 30)
         .registColor("bossPink", color(255, 26, 100), 5, 50)
         .registColor("bossBlue", color(57, 86, 125), 5, 50) // ボス用（急遽）。とりあえず500にしといて。
         .registColor("bossRed", color(74, 6, 10), 5, 50); // ボス用のワインレッド（1面のボス）
