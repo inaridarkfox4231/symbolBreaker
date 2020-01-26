@@ -822,6 +822,36 @@ function setup(){
   })
 
   // やっぱ何も思いつかないので死
+  // 敵パターンの案（下方に進み減速したのち攻撃してから左にフェードアウト）
+  mySystem.addPatternSeed({
+    x:0.2, y:0.2, shotSpeed:4, shotDirection:90,
+    action:{
+      main:[{hide:true}, {deco:{speed:4, direction:90, shape:"squareMiddle", color:"blue"}},
+            {shotAction:["set", "move1"]}, {fire:""}, {wait:32}, {loop:INF, back:2}],
+      move1:[{deco:{speed:6, color:"bossBlue", shape:"wedgeMiddle"}},
+             {speed:["set", 1, 60]}, {aim:0}, {fire:"rad9"}, {direction:["add", 135, 30]},
+             {speed:["set", 8, 60]}]
+    },
+    fireDef:{rad9:{radial:{count:9}}}
+  })
+
+  // wheelの実装。
+  // 四方にレーザーが出て回転しながら向かってくる。
+  // bindでレーザー元が消えたら同時に消えるようにしておく。
+  // 先端からショットを放つバリエーションも面白い。
+  mySystem.addPatternSeed({
+    x:0.5, y:0.1, collisionFlag:ENEMY, color:"bossRed", bgColor:"plgrey",
+    action:{
+      main:[{deco:{speed:8, color:"dkred", shape:"wedgeSmall"}},
+            {shotAction:["set", "wheel"]}, {aim:0}, {fire:""}, {wait:120}, {loop:INF, back:3}],
+      wheel:[{speed:["set", 0, 30]}, {hide:true}, {deco:{speed:12, color:"dkorange", shape:"laserMiddle"}},
+             {shotAction:["set", "laserHead"]},
+             {fire:"rad4"}, {wait:15}, {direction:["aim", 0]}, {speed:["set", 8, 60]}, {direction:["aim", 0]}],
+      laserHead:[{bind:true}, {speed:["set", 0, 15]}, {behavior:["add", "circ"]}]
+    },
+    fireDef:{rad4:{radial:{count:4}}},
+    behaviorDef:{circ:["circular", {bearing:4}]}
+  })
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
