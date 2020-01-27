@@ -853,7 +853,7 @@ function setup(){
     behaviorDef:{circ:["circular", {bearing:4}]}
   })
 
-
+  console.log("ttt");
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
