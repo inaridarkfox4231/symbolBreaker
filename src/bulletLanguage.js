@@ -2348,7 +2348,6 @@ function interpretNestedData(data, dict){
 // execute.
 
 function execute(unit, command){
-  //console.log(command);
   const _type = command.type;
   if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay"].includes(_type)){
     // speedとかshotDirectionとかいじる
