@@ -61,6 +61,7 @@ function setup(){
     fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
   };
   // レーザー撃ってみよう。60フレーム経たないと再発射できない。
+
   weaponData[weaponCapacity++] = {
     shotSpeed:0.1, color:"dkskblue",
     action:{
@@ -85,6 +86,7 @@ function setup(){
     fireDef:{waygun:{nway:{count:"$count", interval:20}}}
   })
 
+
   // デモ画面1. 90°ずつ回転するやつ。
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
@@ -103,11 +105,11 @@ function setup(){
     x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "sweeping"]}, {fire:"rad2"}],
-      sweeping:[{speed:["set", 0.001, 30]}, {behavior:["add", "circ"]}, {bind:true}, {shotDirection:["rel", 0]},
+      sweeping:[{speed:["set", 0.001, 30]}, {move:"circular", bearing:-3},
+                {bind:true}, {shotDirection:["rel", 0]},
                 {shotSpeed:["set", 2]}, {fire:""}, {wait:1}, {shotDirection:["add", 12]}, {loop:INF, back:3}]
     },
-    fireDef:{rad2:{radial:{count:2}}},
-    behaviorDef:{circ:["circular", {bearing:-3}]}
+    fireDef:{rad2:{radial:{count:2}}}
   })
 
   // FALさんの8を書き直し。
@@ -118,11 +120,10 @@ function setup(){
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "flower"]}, {fire:"set"}],
-      flower:[{behavior:["add", "circ"]}, {bind:true}, {shotSpeed:["set", 2]},
+      flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
               {fire:"way2"}, {wait:6}, {loop:4, back:2}, {wait:16}, {loop:INF, back:4}]
     },
-    fireDef:{set:{x:120, y:0, radial:{count:16}}, way2:{nway:{count:2, interval:120}}},
-    behaviorDef:{circ:["circular", {bearing:0.5}]}
+    fireDef:{set:{x:120, y:0, radial:{count:16}}, way2:{nway:{count:2, interval:120}}}
   })
 
   // FALさんの13を書き直し。バリケード。もう過去には戻れない・・
@@ -130,12 +131,13 @@ function setup(){
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "barricade"]}, {fire:"set"}],
-      barricade:[{behavior:["add", "circ"]}, {bind:true}, {shotSpeed:["set", 10]},
+      barricade:[{move:"circular", bearing:1}, {bind:true}, {shotSpeed:["set", 10]},
                  {fire:"rad4"}, {wait:1}, {loop:INF, back:2}]
     },
-    fireDef:{set:{x:120, y:0, radial:{count:3}}, rad4:{radial:{count:4}}},
-    behaviorDef:{circ:["circular", {bearing:1}]}
+    fireDef:{set:{x:120, y:0, radial:{count:3}}, rad4:{radial:{count:4}}}
   })
+
+
 
   // FALさんの17書き直し。これで最後。radiusDiffを使うと螺旋軌道を実現できる。
   // 射出方向はその時の親→自分ベクトルに+15または-15したもの。
@@ -145,20 +147,18 @@ function setup(){
     action:{
       main:[{shotAction:["set", "scatter"]}, {fire:"set"}, {wait:120},
             {shotAction:["set", "scatterInv"]}, {fire:"set"}, {wait:120}, {loop:INF, back:-1}],
-      scatter:[{short:"scatter", behavior:"spiral", dirDiff:15}],
-      scatterInv:[{short:"scatter", behavior:"spiralInv", dirDiff:-15}],
+      scatter:[{short:"scatter", bearing:1.5, dirDiff:15}],
+      scatterInv:[{short:"scatter", bearing:-1.5, dirDiff:-15}],
       trap:[{wait:60}, {speed:["set", 3, 120]}]
     },
     short:{
-      scatter:[{behavior:["add", "$behavior"]}, {bind:true},
+      scatter:[{move:"circular", bearing:"$bearing", radiusDiff:1}, {bind:true},
                {wait:30}, {shotAction:["set","trap"]}, {shotSpeed:["set", 0.0001]},
                {shotDirection:["fromParent", "$dirDiff"]}, {fire:""}, {wait:4}, {loop:INF, back:3}]
     },
-    fireDef:{set:{x:50, y:0, radial:{count:2}}},
-    behaviorDef:{spiral:["circular", {bearing:1.5, radiusDiff:1}],
-                 spiralInv:["circular", {bearing:-1.5, radiusDiff:1}]}
+    fireDef:{set:{x:50, y:0, radial:{count:2}}}
   })
-
+/*
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
   mySystem.addPatternSeed({
@@ -852,8 +852,7 @@ function setup(){
     fireDef:{rad4:{radial:{count:4}}},
     behaviorDef:{circ:["circular", {bearing:4}]}
   })
-
-  console.log("ttt");
+  */
 
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 

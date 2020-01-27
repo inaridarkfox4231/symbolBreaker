@@ -289,3 +289,18 @@ fireの中身とかsetPatternが煩雑過ぎるのが重くなってる原因だ
 今setPatternざっと見たけど、感想：behaviorがウザい。これ邪魔。何とかならないの・・
 ていうか今もうcircular以外使ってないじゃんこれ。
 circularが発動しているときgoBehaviorは死んでるので、これもう差し替えでいいと思う。
+
+shotPatternというのを用意してshotSpeedとかそういうのは全部ここにまとめちゃって、
+で、セットするときはもうそれでそのまま放り込む感じで。
+
+nwayのあれはshotDirectionを統一すれば問題ない。毎フレームの反復処理・・間でやる。あれを別に用意する感じみたいな。
+たとえばradial_gunでやってるのはあれは、放つ間の所で
+shotPatternの中のshotDirectionに対して(shotPatternの中のshotPatternに対する操作)
+{a_shotDirecion:90}してるのよね。で、全部サーキュラムーヴ。
+shotDistanceをいじると発射位置が離れる。それとnwayを組み合わせることで離れた場所に円弧に等間隔で並ぶ。
+shotPatternではなくてpatternにして、patternの中のshotDirectionをいじる感じにする。
+patternはfireのときに参照される情報みたいな意味合い。
+
+speed direction delay move action color shape 7つですべて、のはず。
+あ、あとcollisionFlag. 8つかな・・これでshotPatternの中身すべて。
+fireするときはこれを全部放り込んでbulletを作る・・場合によってはenemyを作る。？shotのshotPatternは基本的に複製。
