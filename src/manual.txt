@@ -258,7 +258,7 @@ class DecorateCommand{
 }
 
 結局いくつ作るの？？
-SetterCommand
+SetCommand
 AddCommand
 IdleCommand
 ThroughCommand
@@ -304,3 +304,12 @@ patternはfireのときに参照される情報みたいな意味合い。
 speed direction delay move action color shape 7つですべて、のはず。
 あ、あとcollisionFlag. 8つかな・・これでshotPatternの中身すべて。
 fireするときはこれを全部放り込んでbulletを作る・・場合によってはenemyを作る。？shotのshotPatternは基本的に複製。
+
+ってやるともうわけわからんよね。
+nwayのnwayとかどうするのかみたいな。
+nwayやradialはひとつのactionみたいな感じ。commandの配列。それが・・
+で、loopもあれ、catchで表現しないといけないし・・はぅぅつらい。
+
+shotDistanceのデフォは0で、だから普通にfireすると自分の位置にbulletやenemyが出現する。
+たとえばdistanceが60ならshotDirectionの方向に60フレームいったところに出現する感じね。
+その弾丸にセットされるshotSpeedやshotDirectionは

@@ -421,8 +421,6 @@ class SelfUnit{
     this.shotDirection = (shotDirection !== undefined ? ptn.shotDirection : -90);
     // shotMoveにする。behaviorは廃止。
     this.shotMove = (shotMove !== undefined ? ptn.shotMove : GO_MOVE);
-    //this.shotBehavior = {};
-    //if(shotBehavior !== undefined){ Object.assign(this.shotBehavior, ptn.shotBehavior); }
     this.shotAction = []; // action内で設定する。
     this.shotColor = (shotColor !== undefined ? ptn.shotColor : entity.drawColor["black"]);
     this.color = (color !== undefined ? ptn.color : entity.drawColor["black"]);
@@ -527,7 +525,6 @@ class Unit{
     this.position = createVector();
     this.previousPosition = createVector(); // 前フレームでの位置
     this.velocity = createVector();
-    //this.defaultBehavior = [goBehavior, frameOutBehavior]; // デフォルト。固定。
     this.counter = new LoopCounter(); // クラス化. loopの制御はこれ以降このコンポジットに一任する。
     this.collider = new CircleCollider(); // 最初に1回だけ作って使いまわす。種類が変わるときだけいじる。基本update.
     this.initialize();
@@ -541,7 +538,6 @@ class Unit{
     this.speed = 0;
     this.direction = 0;
     this.delay = 0;
-    //this.behavior = {}; // オブジェクトにし、各valueを実行する形とする。
     this.move = GO_MOVE; // デフォはGO.
     this.action = []; // 各々の行動はcommandと呼ばれる（今までセグメントと呼んでいたもの）
     this.actionIndex = 0; // 処理中のcommandのインデックス
@@ -554,7 +550,6 @@ class Unit{
     this.shotSpeed = 0;
     this.shotDirection = 0;
     this.shotDelay = 0;
-    //this.shotBehavior = {};
     this.shotMove = GO_MOVE; // デフォはGO.
     this.shotAction = [];
     this.shotCollisionFlag = ENEMY_BULLET; // 基本的にはショットのフラグは敵弾丸。いじるとき、いじる。
@@ -594,7 +589,6 @@ class Unit{
   setPattern(ptn){
     const {x, y, move, shotMove, collisionFlag, shotCollisionFlag} = ptn;
     // この時点でもうx, yはキャンバス内のどこかだしspeedとかその辺もちゃんとした数だし(getNumber通し済み)
-    // behaviorとshotBehaviorもちゃんと{name:関数, ...}形式になっている。
     this.position.set(x, y);
     const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection", "shotDelay"];
     moveProperties.forEach((propName) => {
@@ -625,15 +619,7 @@ class Unit{
     })
 
     this.velocityUpdate(); // 速度が決まる場合を考慮する
-    /*
-    if(behavior !== undefined){
-      this.behavior = {};
-      Object.assign(this.behavior, behavior); // 自分が実行するbehavior. 付け外しできるようオブジェクトで。
-    }
-    if(shotBehavior !== undefined){
-      Object.assign(this.shotBehavior, shotBehavior); // オブジェクトのコピー
-    }
-    */
+
     if(move !== undefined){
       this.move = move;
     }
@@ -694,12 +680,7 @@ class Unit{
     this.setPreviousPosition();
     // followがtrueの場合はshotDirectionをいじる
     if(this.follow){ this.shotDirection = this.direction; }
-    // behaviorの実行（やめた）
-    //Object.values(this.behavior).forEach((behavior) => {
-    //  behavior(this);
-    //})
-    // defaultBehaviorの実行
-    //this.defaultBehavior.forEach((behavior) => { behavior(this); })
+    // moveとframeOutCheck.
     this.move.execute(this);
     this.frameOutCheck();
     // ColliderのUpdate(typeによって分けるけどとりあえずcircleだからね・・)
@@ -1649,6 +1630,7 @@ class GoMove{
   execute(unit){ unit.position.add(unit.velocity); return; }
 }
 
+// 円形移動。parentを中心にbearingのディグリー角速度で回転する。動く場合でも可能。楕円軌道も可能。
 class CircularMove{
   constructor(param){
     this.bearing = param.bearing;
@@ -1669,148 +1651,6 @@ class CircularMove{
     unit.setPosition(newX, newY);
   }
 }
-
-// ---------------------------------------------------------------------------------------- //
-// Behavior.
-// ああこれbehaviorか。配列に入れて毎フレーム実行するやつや・・goとかもそうよね。
-// せいぜいデフォのgoの他はaccellerate, decelerate, brakeAccell, raidくらいか。組み合わせる。
-// 組み合わせるのでもういちいちあれ（位置に速度プラス）を書かない。
-
-// 画面外で消える
-/*
-function frameOutBehavior(unit){
-  const {x, y} = unit.position;
-  if(x < -AREA_WIDTH * 0.2 || x > AREA_WIDTH * 1.2 || y < -AREA_HEIGHT * 0.2 || y > AREA_HEIGHT * 1.2){
-    unit.flagOff(); // これにより外側で消えたときにパーティクルが出現するのを防ぐ
-    unit.vanishFlag = true;
-  }
-}
-*/
-
-// 速度の方向に進む
-/*
-function goBehavior(unit){
-  unit.position.add(unit.velocity);
-}
-*/
-
-// 結局、goBehaviorの代わりにcircularやfallを設定してるだけじゃん・・
-// 廃止しよう。
-// frameOutBehaviorの代わりに単純にframeOutのメソッド使うだけにする。で、
-// 移動タイプをgo, circular, fallなどから選べる感じにしよう。差し替えで。
-// 他のbehaviorはもう要らないので廃止。
-// 更に言うとbehaviorという名称も廃止。まずframeOutはメソッド化。で、moveというプロパティで移動を制御。
-// go:単純に位置に速度を足すだけ。circular:まあ、書いてある通り。
-// fall:落下！goto:特定の位置に特定のフレームで移動。必要ならイージング。
-// shift:ベクトルバージョン。この辺はwaitと組み合わせると同じなら同じだし違うなら・・って。
-// stay:なにもしない。これはグローバルで一つ作っておこうね。
-// 中央に移動して動かなくなってなんか攻撃してまたどうのこうのっていうのはこれで。
-
-// 命令の仕方はたとえば{move:"stay"}とか{move:"goto", x:200, y:100, span:60}とか
-// {move:"shift", x:100, y:0, span:30, easing:1}とか。{shotMove:"fall", gravity:0.44}とか・・
-// こうするとshotMoveに new fallMove(0.44)とかって入って、fireのときにmoveがshotMoveに設定されるイメージ。
-
-// 加速
-// accelleration
-// terminalSpeed用意しますね.(デフォはINF)
-/*
-function accellerateBehavior(param){
-  if(!param.hasOwnProperty("terminalSpeed")){ param.terminalSpeed = INF; }
-  return (unit) => {
-    if(unit.speed < param.terminalSpeed){
-      unit.speed += param.accelleration;
-    }
-    unit.velocityUpdate();
-  }
-}
-*/
-
-// 一定時間減速
-// friction, deceleration, terminalSpeed.
-// frictionがある場合は掛け算、decelerationがある場合はその値で減速する。
-/*
-function decelerateBehavior(param){
-  return (unit) => {
-    if(unit.speed > param.terminalSpeed){
-      if(param.hasOwnProperty("friction")){
-        unit.speed *= (1 - param.friction);
-      }else{
-        unit.speed -= param.deceleration;
-      }
-      unit.velocityUpdate();
-    }
-  }
-}
-*/
-
-// 一定時間減速したのち加速
-// threshold, friction, accelleration
-/*
-function brakeAccellBehavior(param){
-  return (unit) => {
-    if(unit.properFrameCount < param.threshold){
-      unit.speed *= (1 - param.friction);
-    }else{
-      unit.speed += param.accelleration;
-    }
-    unit.velocityUpdate();
-  }
-}
-*/
-
-// circular変える。
-// step1:parentの位置との距離を計測 step2:parent→selfの方向を計測 step3:そこにいくつか足す(3とか-2とか)
-// step4:新しい位置が確定するので更新 step5:directionは元の位置→新しい位置. 以上。
-// radiusDiffで半径も変えられるので実質spiralの機能も併せ持つ。
-
-// だめ。動くときとかこれだと失敗する。じゃあどうやって・・・
-// 毎フレーム、parentがいる限り、parentの位置計算より後でおこなわれるので、
-// parentの前フレームでの位置情報さえあれば正確に計算できるはず。
-// これは(↓)parentが動かないことが前提。動くと失敗する。
-// 前フレームに対してこれを使って計算してから変位を足せば正しい位置が得られるはず。
-
-// ratioXYは楕円軌道の縦÷横。たとえば2なら縦長の楕円。
-/*
-function circularBehavior(param){
-  // param.bearing:3とか-2とか. radiusDiff: 0.5とか-0.5とか。
-  if(!param.hasOwnProperty("radiusDiff")){ param.radiusDiff = 0; }
-  if(!param.hasOwnProperty("ratioXY")){ param.ratioXY = 1.0; }
-  return (unit) => {
-    const {x, y} = unit.position;
-    const {x:px, y:py} = unit.parent.previousPosition;
-    const {x:cx, y:cy} = unit.parent.position;
-    const dx = x - px;
-    const dy = (y - py) / param.ratioXY;
-    const r = Math.sqrt(dx * dx + dy * dy);
-    const dir = atan2(dy, dx);
-    const newX = cx + (r + param.radiusDiff) * cos(dir + param.bearing);
-    const newY = cy + (r + param.radiusDiff) * sin(dir + param.bearing) * param.ratioXY;
-    unit.direction = atan2(newY - y, newX - x);
-    unit.setPosition(newX, newY);
-  }
-}
-*/
-
-// freeFall. gravityに従って自由落下する。
-/*
-function freeFallBehavior(param){
-  if(!param.hasOwnProperty("gravity")){ param.gravity = 0.1; } // デフォは0.1
-  return (unit) => {
-    unit.velocity.y += param.gravity;
-    unit.direction = atan2(unit.velocity.y, unit.velocity.x);
-  }
-}
-*/
-
-// 多彩な曲線
-/*
-function curveBehavior(param){
-	return (unit) => {
-		unit.direction += param.a + param.b * cos(param.c * unit.properFrameCount);
-		unit.velocityUpdate();
-	}
-}
-*/
 
 // ---------------------------------------------------------------------------------------- //
 // createFirePattern.
@@ -2105,49 +1945,19 @@ function parsePatternSeed(seed){
   shapeProperties.forEach((propName) => {
     if(seed[propName] !== undefined){ ptn[propName] = entity.drawShape[seed[propName]]; }
   })
-  // fireDef, behaviorDefの展開
-  // Defを展開してdata.fire, data.behaviorにnameの形で放り込む
+  // fireDefの展開
+  // Defを展開してdata.fireにnameの形で放り込む
   // fireはseed.fireDef.name1:パターンデータ, .name2:パターンデータみたいな感じ。
   data.fire = {};
   if(seed.fireDef !== undefined){
     Object.keys(seed.fireDef).forEach((name) => {
       // いろいろ
-      //let fireFunc = createFirePattern(seed.fireDef[name])
-      //data.fire[name] = fireFunc;
       data.fire[name] = seed.fireDef[name];
     })
   }
 
   // behaviorDefは廃止。
 
-  /*
-  // behaviorは...Behaviorの...だけ名前に入ってるからそこ補ってからwindow[...]でOK
-  data.behavior = {};
-  if(seed.behaviorDef !== undefined){
-    Object.keys(seed.behaviorDef).forEach((name) => {
-      // seed.behaviorDef.name1:["関数名(Behavior除く)", パラメータ]という感じ。
-      let behaviorFunc = window[seed.behaviorDef[name][0] + "Behavior"](seed.behaviorDef[name][1]);
-      data.behavior[name] = behaviorFunc;
-    })
-  }
-
-  // behavior部分(「name:関数」からなるオブジェクト)(valuesを取ってリストに放り込む)
-  if(seed.behavior !== undefined){
-    ptn.behavior = {};
-    seed.behavior.forEach((name) => {
-      ptn.behavior[name] = data.behavior[name];
-    })
-  }
-  // shotBehavior部分(「name:関数」・・同じ)
-  if(seed.shotBehavior !== undefined){
-    ptn.shotBehavior = {};
-    seed.shotBehavior.forEach((name) => {
-      ptn.shotBehavior[name] = data.behavior[name];
-    })
-    // 実行形式内のbehaviorは普通にセッター部分だから問題ないけど。
-    // あとはactionを作って完成。seedをいろいろいじる。
-  }
-  */
   // デフォルトのcollisionFlagね・・敵を出すだけならOFFにするべきよねぇ。
   // 一応hideと枠外の場合は判定しないことにしてるけど。
   if(seed.collisionFlag === undefined){
@@ -2246,7 +2056,6 @@ function createAction(data, targetAction){
 // 翻訳。
 // 1.セット系
 // speed, shotSpeed, direction, shotDirectionについては"set"と"add"... {speed:["set", [3, 7]]}
-// {behavior:["add", "circle1"]} {shotBehavior:["add", "spiral7"]} こういうの {shotBehavior:["clear"]}
 // {fire:"radial16way7"}とかね。
 
 // これがreturnするのがクラスになればいいのね。
@@ -2272,7 +2081,7 @@ function interpretCommand(data, command, index){
     return result;
   }
 
-  // 例：{move:"go"} {move:"stay"} {shotMove:"circular", param:{bearing:3}}
+  // 例：{move:"go"} {move:"stay"} {shotMove:"circular", bearing:3}
   if(["move", "shotMove"].includes(_type)){
     switch(command[_type]){
       case "go": result.move = GO_MOVE; break;
@@ -2284,17 +2093,6 @@ function interpretCommand(data, command, index){
     return result;
   }
 
-  /*
-  if(["behavior", "shotBehavior"].includes(_type)){
-    result.mode = command[_type][0]; // "add" or "remove" or "clear". "clear"は全部消すやつ。
-    // [1]には名前が入っててそれをプロパティ名にする。
-    if(result.mode === "add" || result.mode === "remove"){
-      result.name = command[_type][1]; // 名前は必要
-      result.behavior = data.behavior[result.name]; // ビヘイビア本体
-    }
-    return result;
-  }
-  */
   if(_type === "fire"){
     // fire:名前, の名前を関数にするだけ。
     // ライブラリに存在しない場合は自動的にデフォルトになる（書き忘れ対策）
@@ -2497,26 +2295,14 @@ function execute(unit, command){
     unit.actionIndex++;
     return true; // ループは抜けない
   }
+
   // たとえば{type:"move", move:GO_MOVE}みたいになってるわけ。
   if(["move", "shotMove"].includes(_type)){
     unit[_type] = command.move; // もう出来てる
     unit.actionIndex++;
     return true;
   }
-  /*
-  if(["behavior", "shotBehavior"].includes(_type)){
-    // 自分やショットにセットするビヘイビアの付け外し
-    if(command.mode === "add"){
-      unit[_type][command.name] = command.behavior;
-    }else if(command.mode === "remove"){
-      delete unit[_type][command.name];
-    }else if(command.mode === "clear"){
-      unit[_type] = {};
-    }
-    unit.actionIndex++;
-    return true; // ループは抜けない
-  }
-  */
+
   if(_type === "fire"){
     // fire忘れてた
     if(unit.isPlayer && !keyIsDown(32)){
