@@ -1583,6 +1583,7 @@ function getPlayerDistSquare(pos){
   return pow(pos.x - x, 2) + pow(pos.y - y, 2);
 }
 
+// パースの時に関数にしちゃった方がいいかも。あとcase:3は廃止でいいかも。
 function getNumber(data){
   // dataが単なる数ならそれを返す。
   // [2, 4]とかなら2から4までのどれかの実数を返す。
@@ -1630,6 +1631,22 @@ function frameOutBehavior(unit){
 function goBehavior(unit){
   unit.position.add(unit.velocity);
 }
+
+// 結局、goBehaviorの代わりにcircularやfallを設定してるだけじゃん・・
+// 廃止しよう。
+// frameOutBehaviorの代わりに単純にframeOutのメソッド使うだけにする。で、
+// 移動タイプをgo, circular, fallなどから選べる感じにしよう。差し替えで。
+// 他のbehaviorはもう要らないので廃止。
+// 更に言うとbehaviorという名称も廃止。まずframeOutはメソッド化。で、moveというプロパティで移動を制御。
+// go:単純に位置に速度を足すだけ。circular:まあ、書いてある通り。
+// fall:落下！goto:特定の位置に特定のフレームで移動。必要ならイージング。
+// shift:ベクトルバージョン。この辺はwaitと組み合わせると同じなら同じだし違うなら・・って。
+// stay:なにもしない。これはグローバルで一つ作っておこうね。
+// 中央に移動して動かなくなってなんか攻撃してまたどうのこうのっていうのはこれで。
+
+// 命令の仕方はたとえば{move:"stay"}とか{move:"goto", x:200, y:100, span:60}とか
+// {move:"shift", x:100, y:0, span:30, easing:1}とか。{shotMove:"fall", gravity:0.44}とか・・
+// こうするとshotMoveに new fallMove(0.44)とかって入って、fireのときにmoveがshotMoveに設定されるイメージ。
 
 // 加速
 // accelleration
@@ -2231,7 +2248,6 @@ function interpretCommand(data, command, index){
     // dataにはactionも入っている？？
     if(data.fire[command.fire] === undefined){ result.fire = createFirePattern({}); }
     else{
-      //result.fire = data.fire[command.fire];
       let fireData = interpretNestedData(data.fire[command.fire], command);
       result.fire = createFirePattern(fireData); // 変更
     }
@@ -2346,6 +2362,12 @@ function interpretNestedData(data, dict){
       return result;
   }
 }
+
+// ---------------------------------------------------------------------------------------- //
+// Command.
+
+
+
 
 // ---------------------------------------------------------------------------------------- //
 // execute.

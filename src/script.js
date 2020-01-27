@@ -853,6 +853,8 @@ function setup(){
     behaviorDef:{circ:["circular", {bearing:4}]}
   })
 
+
+
   mySystem.setPattern(DEFAULT_PATTERN_INDEX);
 
 }
