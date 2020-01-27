@@ -2189,8 +2189,11 @@ function createAction(data, targetAction){
 // {fire:"radial16way7"}とかね。
 
 // これがreturnするのがクラスになればいいのね。
+// ここでreturnされるのがクラスになって、executeのところについては、
+// コマンドのメソッドのexecuteに設定されてるやつがそのまま実行されるようになればいいのよね。
 function interpretCommand(data, command, index){
   let result = {};
+  // だからgetTopKeyをもっと活用する必要があるかもね。
   const _type = getTopKey(command); // 最初のキーがそのままtypeになる。
   result.type = _type;
   if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay"].includes(_type)){

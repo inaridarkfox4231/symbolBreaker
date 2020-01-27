@@ -729,7 +729,7 @@ function setup(){
       trap45:[{short:"trapSeed", fireDir:45}],
       trap:[{shotDelay:["set", 60]}, {speed:["set", 8]},
             {shotDirection:["add", 20]}, {fire:""}, {wait:1}, {loop:INF, back:3}],
-      star5:[{speed:["set", 2, 30]}, {shotSpeed:["set", 6]}, {hide:true},
+      star5:[{speed:["set", 2, 30]}, {shotSpeed:["set", 6]}, {hide:true}, {shotDirection:["fromParent", [170, 190]]},
              {fire:"rad5"}, {wait:6}, {loop:15, back:2}, {vanish:1}],
     },
     short:{
