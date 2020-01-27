@@ -720,7 +720,7 @@ function setup(){
             {shotDirection:["set", 195]}, {shotAction:["set", "trap45"]}, {fire:""}, {wait:240},
             {speed:["set", 4]}, {direction:["set", 90]}, {wait:20}, {speed:["set", 0]},
             {shotColor:"killgreen"},
-            {shotAction:["set", "star5"]}, {fire:"rad5"}, {wait:300},
+            {shotDiretion:["set", [0, 72]]}, {shotAction:["set", "star5"]}, {fire:"rad5"}, {wait:300},
             {speed:["set", 4]}, {direction:["set", -90]}, {wait:20}, {speed:["set", 0]},
             {shotColor:"dkgreen"},
             {loop:INF, back:-1}],

@@ -2276,7 +2276,8 @@ function interpretCommand(data, command, index){
   if(_type === "set"){
     // 位置をいじる。{set:{x:100, y:40}}なら強制的に(100, 40)に移動する。
     // 配列を使うとランダムも可能
-    result.x = command.set.x; result.y = command.set.y; return result;
+    result.x = command.set.x; result.y = command.set.y;
+    return result;
   }
   if(_type === "deco"){
     // shotプロパティをいじる。{deco:{speed:8, direction:90, color:"grey", shape:"wedgeMiddle"}}とかする。
