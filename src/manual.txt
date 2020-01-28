@@ -348,3 +348,42 @@ shotAimでaim使ってプレイヤーの方向を定めたうえで発射すれ�
 撃ちだした後その方向に一斉にバーストできるよ・・もっともあれ実現するための無理やり感はあるけど。
 あとshotの撃ちだし方向を90ずついじるってのもradialにaction挟むやつで実現できる。
 a_shotAimみたいな書き方になりそうな。
+
+
+
+createFirePatternを廃止して、fire命令ではdistanceに従ってなんかひとつ作るだけにする。
+置く位置はshotDirection方向にunitの位置からdistanceだけ離れた所。で、createUnit(ptn)する。
+
+たとえばnwayは然るべきactionを・・コマンドアレーはどっかに放り込む・・んー。short使って・・
+未指定の場合は何もしないけど。一部。一部だけ、その配列で置き換える。配列操作関数で。
+short:{nway:[{}, {}, {}, {}, {}, {}]}
+addPatternSeedのときにsetCommonShortcutってやってそこで定義する感じ・・
+
+distanceはデフォ0でいじるときはいじる感じ
+createBulletがスムーズになるからやっぱptn必要かな・・って。
+
+nway. count:n, interval:itv
+{a_shotDirection:-(n - 1) * itv / 2} {catch:"nw1"}, {fire:""} {なんか} {a_shotDirection:itv} {loop:n, back:"nw1"}
+{a_shotDirection:-(n + 1) * itv / 2}
+
+{nway:{count:n, interval:itv, action:{}{}{}}} ってあったらここをそれでいじる感じ。
+actionにwaitが入って無ければ一斉に発射されるし、入ってれば順繰りに発射されるし、shotDelayが増加する感じなら
+並べてから順繰りに発射されるしって感じね。
+
+radial. count:n
+{catch:"rad1"} {fire:""} {なんか} {a_shotDirection:360/n} {loop:n, back:"rad1"}
+指定するとき
+{radial:{count:n, action:{}{}}}
+actionでshotAimを90ずつ増やすとかそういう・・まあwaitしても。
+そうか、waitで順繰りに発射するのもradialの一形態として処理できるの大きいかもな・・
+
+line. count:n, upSpeed:us
+{catch:"ln1"} {fire:""} {なんか} {a_shotSpeed:us} {loop:n, back:"ln1"}
+指定するとき
+{line:{count:n, upSpeed:us, action:{}{}{}}}
+
+catchに使うタグは予めグローバルで作っておいてリセットの度にリセットする感じで。
+
+actionのところは今まで通り下に配列で[{}{}]みたいにするといいかも。
+
+スタバからアクセスするテスト完了。ついでにコミットしてみる。

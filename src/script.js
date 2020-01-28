@@ -56,9 +56,10 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
+      main:[{shotAction:["set", "go"]}, {fire:"way4"}, {wait:4}, {loop:INF, back:2}],
+      go:[{wait:5}, {direction:["set", -90]}]
     },
-    fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
+    fireDef:{way4:{nway:{count:4, interval:25}}}
   };
   // レーザー撃ってみよう。60フレーム経たないと再発射できない。
 

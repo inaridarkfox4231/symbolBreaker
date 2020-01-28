@@ -1806,7 +1806,6 @@ function createFirePattern(data){
       ptn.shotDirection = unit.shotAim; // ???
       // 一旦廃止
       ptn.shotSpeed = ptn.speed;
-      // ptn.shotDirection = ptn.direction; // unit.shotShotDirection??
     })
 
     // このタイミングでunitのshotSpeedなどに指定があるなら一斉に適用する。でなければデフォルト値を使う。
@@ -1826,7 +1825,6 @@ function createFirePattern(data){
           ptnArray = createNWay({count:wayData.count[i], interval:wayData.interval[i]}, ptnArray);
         }
       }
-      //ptnArray = createNWay(data.nway, ptnArray); // とりあえずnway.
     }
     if(data.hasOwnProperty("radial")){
       ptnArray = createRadial(data.radial, ptnArray); // とりあえずradial.
@@ -1855,9 +1853,6 @@ function createFirePattern(data){
       // 色、形関連
       ptn.color = unit.shotColor;
       ptn.shape = unit.shotShape;
-      // 基本的に自分の複製をする(Commandで変更可能)
-      //ptn.shotColor = ptn.color;
-      //ptn.shotShape = ptn.shape;
       // collisionFlag.
       ptn.collisionFlag = unit.shotCollisionFlag; // 当然。
       // ENEMY_BULLETの分裂で出来るのはENEMY_BULLET, PLAYER_BULLETの分裂でできるのはPLAYER_BULLET.
@@ -1923,16 +1918,7 @@ function parsePatternSeed(seed){
   // seed[propName]は文字列（キー）なのでこれを元にオブジェクトを召喚する。
   if(seed.color !== undefined){ ptn.color = entity.drawColor[seed.color]; }
   if(seed.shape !== undefined){ ptn.shape = entity.drawShape[seed.shape]; }
-  /*
-  const colorProperties = ["color", "shotColor"];
-  colorProperties.forEach((propName) => {
-    if(seed[propName] !== undefined){ ptn[propName] = entity.drawColor[seed[propName]]; }
-  })
-  const shapeProperties = ["shape", "shotShape"];
-  shapeProperties.forEach((propName) => {
-    if(seed[propName] !== undefined){ ptn[propName] = entity.drawShape[seed[propName]]; }
-  })
-  */
+
   // fireDefの展開
   // Defを展開してdata.fireにnameの形で放り込む
   // fireはseed.fireDef.name1:パターンデータ, .name2:パターンデータみたいな感じ。
@@ -1949,21 +1935,6 @@ function parsePatternSeed(seed){
   // colliは未指定ならOFFでそうでないならENEMYでOK.
   // たとえばOFFにENEMY放らせたいならあとで指定してね。
   if(seed.collisionFlag === undefined){ ptn.collisionFlag = OFF; }else{ ptn.collisionFlag = ENEMY; }
-  /*
-  if(seed.collisionFlag === undefined){
-    // collisionFlagが未指定の場合はOFF-ENEMY.
-    ptn.collisionFlag = OFF;
-    ptn.shotCollisionFlag = ENEMY;
-  }else if(seed.shotCollisionFlag === undefined){
-    // collisionFlagのみ指定の場合は何であっても(""や-1であっても)ENEMY-ENEMY_BULLET.
-    ptn.collisionFlag = ENEMY;
-    ptn.shotCollisionFlag = ENEMY_BULLET;
-  }else{
-    // 両方指定の場合は両方指定
-    ptn.collisionFlag = seed.collisionFlag;
-    ptn.shotCollisionFlag = seed.collisionFlag;
-  }
-  */
 
   // ここでseed.actionのキー配列を取得
   const actionKeys = Object.keys(seed.action);
