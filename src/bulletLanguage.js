@@ -535,11 +535,11 @@ class Unit{
     this.position.set(0, 0);
     this.previousPosition.set(0, 0);
     this.velocity.set(0, 0);
-    this.speed = 0;
-    this.direction = 0;
-    this.delay = 0;
-    this.move = GO_MOVE; // デフォはGO.
-    this.action = []; // 各々の行動はcommandと呼ばれる（今までセグメントと呼んでいたもの）
+    this.speed = 0; // 1.
+    this.direction = 0; // 2.
+    this.delay = 0; // 3.
+    this.move = GO_MOVE; // デフォはGO. 4.
+    this.action = []; // 各々の行動はcommandと呼ばれる（今までセグメントと呼んでいたもの） 5.
     this.actionIndex = 0; // 処理中のcommandのインデックス
 
     this.counter.initialize();
@@ -547,15 +547,15 @@ class Unit{
     // 親の情報（bearingや親がやられたときの発動など用途様々）
     this.parent = undefined; // 自分を生み出したunitに関する情報。ノードでなければ何かしら設定される。
     // bulletを生成する際に使うプロパティ
-    this.shotSpeed = 0;
-    this.shotDirection = 0;
+    this.shotSpeed = 0; // 6.
+    this.shotDirection = 0; // 7.
     this.shotDelay = 0;
     this.shotMove = GO_MOVE; // デフォはGO.
     this.shotAction = [];
     this.shotCollisionFlag = ENEMY_BULLET; // 基本的にはショットのフラグは敵弾丸。いじるとき、いじる。
     // 色、形. デフォルトはこんな感じ。
-    this.shape = entity.drawShape["squareMiddle"]; // これ使ってdrawするからね。描画用クラス。
-    this.color = entity.drawColor["plblue"];
+    this.shape = entity.drawShape["squareMiddle"]; // これ使ってdrawするからね。描画用クラス。 // 8.
+    this.color = entity.drawColor["plblue"]; // 9.
     this.shotShape = entity.drawShape["wedgeSmall"];
     this.shotColor = entity.drawColor["blue"];
     this.drawParam = {}; // 描画用付加データは毎回初期化する
@@ -565,7 +565,7 @@ class Unit{
     this.hide = false; // 隠したいとき // appearでも作る？disappearとか。それも面白そうね。ステルス？・・・
     this.follow = false; // behaviorの直後、actionの直前のタイミングでshotDirectionをdirectionで更新する。
     // 衝突判定関連
-    this.collisionFlag = ENEMY_BULLET; // default. ENEMY, PLAYER_BULLETの場合もある。
+    this.collisionFlag = ENEMY_BULLET; // default. ENEMY, PLAYER_BULLETの場合もある。 // 10.
     // colliderがcircleでなくなってる場合は新たにCircleColliderを生成して当てはめる。
     if(this.collider.type !== "circle"){ this.collider = new CircleCollider(); }
     else{ /* Check(必要なら) */ this.collider.update(0, 0, 0); }
@@ -587,61 +587,34 @@ class Unit{
     this.velocity.set(this.speed * cos(this.direction), this.speed * sin(this.direction));
   }
   setPattern(ptn){
-    const {x, y, move, shotMove, collisionFlag, shotCollisionFlag} = ptn;
+    const {x, y} = ptn;
     // この時点でもうx, yはキャンバス内のどこかだしspeedとかその辺もちゃんとした数だし(getNumber通し済み)
     this.position.set(x, y);
-    const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection", "shotDelay"];
+    const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection"];
     moveProperties.forEach((propName) => {
       if(ptn[propName] !== undefined){ this[propName] = ptn[propName]; } // 確定は済んでる
     })
-
-    // ここ注意。ptn.colorやptn.shotColorなどはオブジェクト。だからそのまま放り込む。
-    // ただし、ノードユニットを作る大元などはもちろん文字列で指定してある（でないとjsonに落とせないので）。
-    // そういうのはparseの段階で文字列からオブジェクトに変換するので問題ないよ。
-    // actionでshotColorやshotShapeをいじる場合ももちろん文字列指定、適切にparseを行う。
-
-    // ノンデフォルトの場合に変更します
-    const colorProperties = ["color", "shotColor"]
-    colorProperties.forEach((propName) => {
-      if(ptn[propName] !== undefined){
-        //this[name] = ptn[name];
-        this[propName] = ptn[propName];
-      } // オブジェクト
-    })
-
-    // ノンデフォルトの場合に変更。
-    const shapeProperties = ["shape", "shotShape"]
-    shapeProperties.forEach((propName) => {
-      if(ptn[propName] !== undefined){
-        //this[name] = ptn[name];
-        this[propName] = ptn[propName];
-      } // オブジェクト
-    })
-
     this.velocityUpdate(); // 速度が決まる場合を考慮する
 
-    if(move !== undefined){
-      this.move = move;
-    }
-    if(shotMove !== undefined){
-      this.shotMove = shotMove;
-    }
-    if(collisionFlag !== undefined){
-      this.collisionFlag = collisionFlag; // collisionFlagがENEMY_BULLETでない場合は別途指示する
-    }
-    if(shotCollisionFlag !== undefined){
-      this.shotCollisionFlag = shotCollisionFlag;
-    }
+    // ノンデフォルトの場合に変更します（自分と同じものを出す場合は個別に決めてね。）
+    if(ptn.color !== undefined){ this.color = ptn.color; }
+    if(ptn.shape !== undefined){ this.shape = ptn.shape; }
+    if(ptn.move !== undefined){ this.move = ptn.move; }
+    if(ptn.collisionFlag !== undefined){ this.collisionFlag = ptn.collisionFlag; } // ENEMY_BULLETでない場合は別途指示
     this.action = ptn.action; // action配列
+
+    // shotCollisionFlagの初期設定。基本的に複製。
+    if(this.collisionFlag === PLAYER_BULLET){ this.shotCollisionFlag = PLAYER_BULLET; }
+    if(this.collisionFlag === ENEMY_BULLET){ this.shotCollisionFlag = ENEMY_BULLET; }
+
     // parentの設定(用途様々)
     if(ptn.parent !== undefined){
       this.parent = ptn.parent;
     }
-    // shapeのセッティング忘れてた・・・・・・・できた！
-    // ここでcolliderの初期設定、違うcolliderになる場合は違うものにする。
-    // laserのセッティングにparentを使うのでこうしないとparentの情報が使えないのね。
+    // parentの情報を使う場合があるのでparentのあとでshapeのsetを実行する
     this.shape.set(this);
-    // lifeとdamage
+    // lifeとdamage(ptn作るときに事前に計算しておいた方がいい、)
+    // (でないとたとえば100個作る場合に100回同じ計算する羽目になる。shapeとcolorから出るならここでしなくていいよ。)
     if(this.collisionFlag === ENEMY_BULLET || this.collisionFlag === PLAYER_BULLET){
       this.damage = calcDamage(this.shape, this.color); // shape:基礎ダメージ、color:倍率
     }
@@ -1802,6 +1775,13 @@ function createFirePattern(data){
     // formationがなくてもx, yプロパティがあれば(x, y)にひとつだけっていうのが実現するように仕様変更して。
     // 位置指定
     let ptnArray = [];
+
+    // どうしたいかっていうと、この下、fittingまでの一連の流れを削除して、代わりにdistanceというプロパティを用意する。
+    // そして、デフォルトの位置をshotDirection方向にdistanceだけ離れた場所に一つ、とする。
+    // つまりxとかyも廃止ね・・
+    // そして、nwayとかradialとかlineは間に一つまでactionを挟む形で反復処理で実現する。
+    // たとえばradialでセットする弾丸のshotDirectionを90ずつ変えたいとかそういうときに重宝するイメージ。
+
     if(data.hasOwnProperty("formation")){
       // 指定する場合
       ptnArray = getFormation(data.formation);
@@ -1815,6 +1795,7 @@ function createFirePattern(data){
     // この時点で[{x:~~, y:~~}]の列ができている。回転させて正面にもってくる。
     // このとき発射方向に合わせて回転する。
     fitting(ptnArray, unit.shotDirection);
+
     // 速度を設定
     // ここ、同じ方向当てはめるようになってるけど、いっせいにある角度だけ
     // 回転させるようにするとかのオプションがあってもいいかもしれない。
@@ -1822,6 +1803,8 @@ function createFirePattern(data){
       ptn.speed = unit.shotSpeed;
       ptn.direction = unit.shotDirection + (data.hasOwnProperty("bend") ? data.bend : 0);
       // 一旦廃止
+      // そのうちunit.ptn.shotSpeedとunit.ptn.shotDirectionにするつもり。?
+      // あれ・・unit.shotDirectionとunit.ptn.directionを分ければbend要らないのでは・・・？はっ！！
       ptn.shotSpeed = ptn.speed;
       ptn.shotDirection = ptn.direction;
     })
@@ -1866,20 +1849,21 @@ function createFirePattern(data){
       //ptn.shotSpeed = ptn.speed; // 基本、同じ速さ。
       //ptn.shotDirection = ptn.direction; // 基本、飛んでく方向だろうと。
       // ↑まずいよねぇ・・
-      ptn.shotDelay = 0; // デフォルト
+      //ptn.shotDelay = 0; // デフォルト
       //ptn.shotBehavior = {}; // デフォルト
       ptn.action = unit.shotAction; // 無くても[]が入るだけ
       // 色、形関連
       ptn.color = unit.shotColor;
       ptn.shape = unit.shotShape;
       // 基本的に自分の複製をする(Commandで変更可能)
-      ptn.shotColor = ptn.color;
-      ptn.shotShape = ptn.shape;
+      //ptn.shotColor = ptn.color;
+      //ptn.shotShape = ptn.shape;
       // collisionFlag.
       ptn.collisionFlag = unit.shotCollisionFlag; // 当然。
       // ENEMY_BULLETの分裂で出来るのはENEMY_BULLET, PLAYER_BULLETの分裂でできるのはPLAYER_BULLET.
-      if(ptn.collisionFlag === ENEMY_BULLET){ ptn.shotCollisionFlag = ENEMY_BULLET; }
-      if(ptn.collisionFlag === PLAYER_BULLET){ ptn.shotCollisionFlag = PLAYER_BULLET; }
+      // これは向こうでやるべき
+      //if(ptn.collisionFlag === ENEMY_BULLET){ ptn.shotCollisionFlag = ENEMY_BULLET; }
+      //if(ptn.collisionFlag === PLAYER_BULLET){ ptn.shotCollisionFlag = PLAYER_BULLET; }
       // ※shotCollisionFlagのデフォルトはENEMY_BULLETです。
       // たとえばOFFがENEMYを作るときとか、collisionFlagはENEMYでこの上の2行は無視される。で、ENEMY_BULLETになる。
       // PLAYERが出す場合はcollisionFlagのところがPLAYERになることがそもそもありえないのでありえない感じ。
@@ -1929,14 +1913,17 @@ function parsePatternSeed(seed){
   if(x !== undefined){ ptn.x = getNumber(x) * AREA_WIDTH; }
   if(y !== undefined){ ptn.y = getNumber(y) * AREA_HEIGHT; }
 
-  // behavior関連
-  const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection", "shotDelay"]
+  // move関連
+  const moveProperties = ["speed", "direction", "delay", "shotSpeed", "shotDirection"]
   moveProperties.forEach((propName) => {
     if(seed[propName] !== undefined){ ptn[propName] = getNumber(seed[propName]); }
   })
   // 色、形関連
   // ここでオブジェクトにしてしまう（色や形はこのタイミングでは登録済み）
   // seed[propName]は文字列（キー）なのでこれを元にオブジェクトを召喚する。
+  if(seed.color !== undefined){ ptn.color = entity.drawColor[seed.color]; }
+  if(seed.shape !== undefined){ ptn.shape = entity.drawShape[seed.shape]; }
+  /*
   const colorProperties = ["color", "shotColor"];
   colorProperties.forEach((propName) => {
     if(seed[propName] !== undefined){ ptn[propName] = entity.drawColor[seed[propName]]; }
@@ -1945,6 +1932,7 @@ function parsePatternSeed(seed){
   shapeProperties.forEach((propName) => {
     if(seed[propName] !== undefined){ ptn[propName] = entity.drawShape[seed[propName]]; }
   })
+  */
   // fireDefの展開
   // Defを展開してdata.fireにnameの形で放り込む
   // fireはseed.fireDef.name1:パターンデータ, .name2:パターンデータみたいな感じ。
@@ -1958,8 +1946,10 @@ function parsePatternSeed(seed){
 
   // behaviorDefは廃止。
 
-  // デフォルトのcollisionFlagね・・敵を出すだけならOFFにするべきよねぇ。
-  // 一応hideと枠外の場合は判定しないことにしてるけど。
+  // colliは未指定ならOFFでそうでないならENEMYでOK.
+  // たとえばOFFにENEMY放らせたいならあとで指定してね。
+  if(seed.collisionFlag === undefined){ ptn.collisionFlag = OFF; }else{ ptn.collisionFlag = ENEMY; }
+  /*
   if(seed.collisionFlag === undefined){
     // collisionFlagが未指定の場合はOFF-ENEMY.
     ptn.collisionFlag = OFF;
@@ -1973,6 +1963,7 @@ function parsePatternSeed(seed){
     ptn.collisionFlag = seed.collisionFlag;
     ptn.shotCollisionFlag = seed.collisionFlag;
   }
+  */
 
   // ここでseed.actionのキー配列を取得
   const actionKeys = Object.keys(seed.action);
