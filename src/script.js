@@ -56,7 +56,7 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{shotAction:["set", "go"]}, {catch:"a"}, {nway:{count:4, interval:25, action:""}},
+      main:[{shotAction:["set", "go"]}, {catch:"a"}, {nway:{count:4, interval:25}},
             {wait:4}, {loop:INF, back:"a"}],
       go:[{wait:5}, {direction:["set", -90]}]
     }
@@ -84,7 +84,7 @@ function setup(){
             {short:"waygun", count:7}, {short:"waygun", count:9},
             {wait:16}, {loop:INF, back:"a"}]
     },
-    short:{waygun:[{nway:{count:"$count", interval:20, action:""}}, {wait:4}, {shotDirection:["add", 5]}]}
+    short:{waygun:[{nway:{count:"$count", interval:20}}, {wait:4}, {shotDirection:["add", 5]}]}
   })
 
   // デモ画面1. 90°ずつ回転するやつ。
@@ -93,10 +93,10 @@ function setup(){
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "way3burst"]}, {catch:"a"},
-            {catch:"b"}, {radial:{count:2, action:""}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
+            {catch:"b"}, {radial:{count:2}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
             {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
       way3burst:[{follow:true}, {wait:16}, {shotAction:["set", "fade"]},
-                 {nway:{count:3, interval:90, action:""}}, {vanish:1}],
+                 {nway:{count:3, interval:90}}, {vanish:1}],
       fade:[{vanish:60}]
     }
   })
@@ -106,28 +106,26 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "sweeping"]}, {fire:"rad2"}],
+      main:[{shotAction:["set", "sweeping"]}, {radial:{count:2}}],
       sweeping:[{speed:["set", 0.001, 30]}, {move:"circular", bearing:-3},
                 {bind:true}, {shotDirection:["rel", 0]},
                 {shotSpeed:["set", 2]},
                 {catch:"a"}, {fire:""}, {wait:1}, {shotDirection:["add", 12]}, {loop:INF, back:"a"}]
-    },
-    fireDef:{rad2:{radial:{count:2}}}
+    }
   })
 
   // FALさんの8を書き直し。
   // followとかbendとか面倒な事をしない場合、射出方向は撃ちだしたときのshotDirection(この場合0)を
   // radialで回転させたものに、要するに配置時の中心から外側への方向。それが固定されたままくるくる回る仕組み。
   // それがあのthis.bearingの意味だとすればこれでよいのだろうね。(つまり各unitのshotDirectionは固定！)
-
+  // fromParentのshotDirection操作でちょっと修正。
   mySystem.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]},
-            {radial:{count:16, action:""}}],
+      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]}, {radial:{count:16}}],
       flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
               {shotDirection:["fromParent", 0]},
-              {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120, action:""}}, {wait:6}, {loop:4, back:"b"},
+              {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120}}, {wait:6}, {loop:4, back:"b"},
               {wait:16}, {loop:INF, back:"a"}]
     }
   })

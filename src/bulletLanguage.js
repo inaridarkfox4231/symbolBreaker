@@ -1966,7 +1966,6 @@ function parsePatternSeed(seed){
   // actionをキー配列の下から見ていって適宜シード列で置き換える感じ。下から出ないと失敗する。
   // それが終わったら、loopとsignal(そのうちjumpやswitchも作りたい・・)に出てくるbackの文字列を
   // どのくらい戻るかの整数で置き換える。というわけでもう-1記法は使わない。
-
   let preData = {};
   for(let i = actionKeys.length - 1; i >= 0; i--){
     const key = actionKeys[i];
@@ -2021,7 +2020,7 @@ function createNwayArray(seed, data){
   const {count, interval, action} = seed.nway;
   result.push({shotDirection:["add", -(count - 1) * interval / 2]});
   result.push({catch:("nway" + nwayId)});
-  if(action === ""){
+  if(action === undefined){
     result.push({fire:""});
   }else{
     result.push(...data[action]);
@@ -2038,7 +2037,7 @@ function createRadialArray(seed, data){
   let result = [];
   const {count, action} = seed.radial;
   result.push({catch:("radial" + radialId)});
-  if(action === ""){
+  if(action === undefined){
     result.push({fire:""});
   }else{
     result.push(...data[action]);
@@ -2054,7 +2053,7 @@ function createLineArray(seed, data){
   let result = [];
   const {count, upSpeed, action} = seed.line;
   result.push({catch:("line" + lineId)});
-  if(action === ""){
+  if(action === undefined){
     result.push({fire:""});
   }else{
     result.push(...data[action]);
