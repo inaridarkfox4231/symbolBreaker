@@ -1642,257 +1642,35 @@ class CircularMove{
 
 // ---------------------------------------------------------------------------------------- //
 // createFirePattern.
-// 各種パターンの生成。そのうちdelayとかstealthとか実装したい。
-// delay:一定時間止まってからスタートする。
-// stealth:一定時間の間姿が見えない（当たり判定も存在しない）・・トラップみたいなのイメージしてる。
-// stealthとホーミングやディレイを組み合わせたら面白いものが出来そう。
 
-function getFormation(param){
-  let ptnArray = [];
-  switch(param.type){
-    case "default":
-      // その場に1個
-      ptnArray.push({x:0, y:0});
-      break;
-    case "points":
-      // 指定した場所. p[[x1, y1], [x2, y2], [x3, y3]]みたいな。
-      for(let i = 0; i < param.p.length; i++){
-        ptnArray.push({x:param.p[i][0], y:param.p[i][1]});
-      }
-      break;
-    case "frontVertical":
-      // 射出方向に横一列
-      for(let i = 0; i < param.count; i++){
-        ptnArray.push({x:param.distance, y:(i - (param.count - 1) / 2) * param.interval});
-      }
-      break;
-    case "frontHorizontal":
-      // 射出方向に縦一列
-      for(let i = 0; i < param.count; i++){
-        ptnArray.push({x:param.distance + i * param.interval, y:0});
-      }
-      break;
-    case "wedge":
-      // 射出方向のどこかから対称にV字(2n+1個)
-      ptnArray.push({x:param.distance, y:0});
-      for(let i = 1; i < param.count; i++){
-        ptnArray.push({x:param.distance + i * param.diffX, y:i * param.diffY});
-        ptnArray.push({x:param.distance + i * param.diffX, y:-i * param.diffY});
-      }
-      break;
-    case "randomCircle":
-      // 中心から一定の円形の範囲内でランダムにいくつか
-      for(let i = 0; i < param.count; i++){
-        let r = random(0, param.radius);
-        let theta = random(0, 360);
-        ptnArray.push({x:r * cos(theta), y:r * sin(theta)});
-      }
-      break;
-  }
-  return ptnArray;
-}
+function executeFire(unit){
+  // bulletにセットするパターンを作ります。
+  let ptn = {};
 
-function fitting(posArray, direction){
-  // posArrayをすべてdirectionだけ回転させる
-  posArray.forEach((pos) => {
-    const {x, y} = pos;
-    pos.x = x * cos(direction) - y * sin(direction);
-    pos.y = y * cos(direction) + x * sin(direction);
-  })
-}
+  // formation, fitting, nway, radial, lineすべて廃止
 
-// いわゆるnway.
-// countが個数、intervalは角度のインターバル。
-function createNWay(param, ptnArray){
-  let newArray = [];
-  // x, yは指定角度だけ回転させる、あとdirectionも。
-  ptnArray.forEach((ptn) => {
-    for(let i = 0; i < param.count; i++){
-      const shotDirDiff = (param.hasOwnProperty("shotDirDiff") ? param.shotDirDiff : param.interval);
-      const shotSpeedDiff = (param.hasOwnProperty("shotSpeedDiff") ? param.shotSpeedDiff : 0);
-      const diffAngle = (i - (param.count - 1) / 2) * param.interval;
-      let obj = {};
-      Object.assign(obj, ptn);
-      const {x, y, direction, shotSpeed, shotDirection} = ptn;
-      //let newPtn = {speed:ptn.speed};
-      obj.x = x * cos(diffAngle) - y * sin(diffAngle);
-      obj.y = y * cos(diffAngle) + x * sin(diffAngle);
-      obj.direction = direction + diffAngle;
-      // shotDirection, shotSpeedについて（デフォは追従）
-      obj.shotDirection = shotDirection + (i - (param.count - 1) / 2) * shotDirDiff;
-      obj.shotSpeed = shotSpeed + (i - (param.count - 1) / 2) * shotSpeedDiff;
-      newArray.push(obj);
-    }
-  })
-  return newArray;
-}
+  // 位置ずらし
+  ptn.x = unit.position.x + cos(unit.shotDirection) * unit.shotDistance;
+  ptn.y = unit.position.y + sin(unit.shotDirection) * unit.shotDistance;
+  // speed, direction.
+  ptn.speed = unit.shotSpeed;
+  ptn.direction = unit.shotDirection;
+  ptn.shotDirection = unit.shotAim; // ???
+  ptn.shotSpeed = ptn.speed;
+  // option.
+  ptn.delay = unit.shotDelay;
+  ptn.move = unit.shotMove;
+  // action(無くても[]が入るだけ)
+  ptn.action = unit.shotAction;
+  // 色、形関連
+  ptn.color = unit.shotColor;
+  ptn.shape = unit.shotShape;
+  // collisionFlag.
+  ptn.collisionFlag = unit.shotCollisionFlag;
+  // <<---重要--->> parentの設定。createUnitのときに設定される。
+  ptn.parent = unit;
 
-// いわゆるradial.
-// countが角度の個数.
-function createRadial(param, ptnArray){
-  let newArray = [];
-  // diffAngleに360/param.countを使うだけ。
-  ptnArray.forEach((ptn) => {
-    for(let i = 0; i < param.count; i++){
-      const shotDirDiff = (param.hasOwnProperty("shotDirDiff") ? param.shotDirDiff : 360 / param.count);
-      const shotSpeedDiff = (param.hasOwnProperty("shotSpeedDiff") ? param.shotSpeedDiff : 0);
-      const diffAngle = 360 * i / param.count;
-      let obj = {};
-      Object.assign(obj, ptn);
-      const {x, y, direction, shotSpeed, shotDirection} = ptn;
-      obj.x = x * cos(diffAngle) - y * sin(diffAngle);
-      obj.y = y * cos(diffAngle) + x * sin(diffAngle);
-      obj.direction = direction + diffAngle;
-      // shotSpeedとshotDirection.
-      obj.shotDirection = shotDirection + shotDirDiff * i;
-      obj.shotSpeed = shotSpeed + shotSpeedDiff * i;
-      newArray.push(obj);
-    }
-  })
-  return newArray;
-}
-
-// いわゆるline.
-// 速さを増しながら複数用意する感じ
-// countが弾ひとつからいくつ作るか、upSpeedはまんまの意味。
-function createLine(param, ptnArray){
-  let newArray = [];
-  ptnArray.forEach((ptn) => {
-    for(let i = 0; i < param.count; i++){
-      const shotDirDiff = (param.hasOwnProperty("shotDirDiff") ? param.shotDirDiff : 0);
-      const shotSpeedDiff = (param.hasOwnProperty("shotSpeedDiff") ? param.shotSpeedDiff : param.upSpeed);
-      let obj = {};
-      Object.assign(obj, ptn);
-      const {speed, shotSpeed, shotDirection} = ptn;
-      obj.speed = speed + i * param.upSpeed;
-      obj.shotSpeed = shotSpeed + i * shotSpeedDiff;
-      obj.shotDirection = shotDirection + i * shotDirDiff;
-      // lineの各bulletについて角度を変えるなんてことも・・してどうするんだって話だけど。
-      newArray.push(obj);
-    }
-  })
-  return newArray;
-}
-
-// この関数をたとえば4フレームに1回とかすることでいろいろ実現できるよって感じのあれ。
-// data.formation:{}フォーメーションを決める
-//   type:default・・普通に真ん中に1個（formation未指定の場合はこれになる）
-//   type:frontVertical・・
-// data.nwayやらdata.radialやら存在するならそれを考慮・・準備中。
-// dataに入ってるのはformationとnwayやradial, lineなどの情報だけ。あとは全部・・そうです。
-// つまり配置関連の情報がdataで挙動についてはunitに全部入ってるからそっちを使うことになる。
-// 完成したbulletのたとえばshotdelayなどもaction内で制御することになるわけ。
-function createFirePattern(data){
-  return (unit) => {
-    // bulletにセットするパターンを作ります。既に実行形式。setとactionしかない。
-    // 一番最初にcannonにセットするやつと違って余計なものが排除された純粋なパターン。
-    // dataに入ってるのはまずformationプロパティ、ない場合はデフォルト、自分の場所に1個。
-    // formationがなくてもx, yプロパティがあれば(x, y)にひとつだけっていうのが実現するように仕様変更して。
-    // 位置指定
-    let ptnArray = [];
-
-    // どうしたいかっていうと、この下、fittingまでの一連の流れを削除して、代わりにdistanceというプロパティを用意する。
-    // そして、デフォルトの位置をshotDirection方向にdistanceだけ離れた場所に一つ、とする。
-    // つまりxとかyも廃止ね・・
-    // そして、nwayとかradialとかlineは間に一つまでactionを挟む形で反復処理で実現する。
-    // たとえばradialでセットする弾丸のshotDirectionを90ずつ変えたいとかそういうときに重宝するイメージ。
-
-/*
-    if(data.hasOwnProperty("formation")){
-      // 指定する場合
-      ptnArray = getFormation(data.formation);
-    }else if(data.hasOwnProperty("x") && data.hasOwnProperty("y")){
-      // 1点の場合
-      ptnArray = [{x:getNumber(data.x), y:getNumber(data.y)}]; // ランダム指定も可能
-    }else{
-      // デフォルト
-      ptnArray = [{x:0, y:0}];
-    }
-    // この時点で[{x:~~, y:~~}]の列ができている。回転させて正面にもってくる。
-    // このとき発射方向に合わせて回転する。
-    fitting(ptnArray, unit.shotDirection);
-*/
-    ptnArray.push({
-      x:(cos(unit.shotDirection) * unit.shotDistance),
-      y:(sin(unit.shotDirection) * unit.shotDistance)
-    });
-
-    // 速度を設定. bend廃止。
-    ptnArray.forEach((ptn) => {
-      ptn.speed = unit.shotSpeed;
-      ptn.direction = unit.shotDirection;
-      ptn.shotDirection = unit.shotAim; // ???
-      // 一旦廃止
-      ptn.shotSpeed = ptn.speed;
-    })
-
-    // このタイミングでunitのshotSpeedなどに指定があるなら一斉に適用する。でなければデフォルト値を使う。
-    // ...あれ？
-
-    // nwayとかradialとかする(data.decorateに情報が入っている)
-    // nwayは唯一重複が効くので仕様変更する。
-    if(data.hasOwnProperty("nway")){
-      // data.nway.countが3とか7だったらそのままでいいけど[13, 2]とかの場合には
-      // 繰り返し適用する。その場合intervalも[8, 5]とかなってて対応させる感じ。
-      if(typeof(data.nway.count) === "number"){
-        ptnArray = createNWay(data.nway, ptnArray);
-      }else{
-        const kindNum = data.nway.count.length;
-        const wayData = data.nway;
-        for(let i = 0; i < kindNum; i++){
-          ptnArray = createNWay({count:wayData.count[i], interval:wayData.interval[i]}, ptnArray);
-        }
-      }
-    }
-    if(data.hasOwnProperty("radial")){
-      ptnArray = createRadial(data.radial, ptnArray); // とりあえずradial.
-    }
-    if(data.hasOwnProperty("line")){
-      ptnArray = createLine(data.line, ptnArray); // なんかline.
-    }
-    // この時点でこれ以上ptnは増えないのでdelayとbehaviorをまとめて設定する
-    // 実行形式のpatternを作る。略形式じゃないやつ。あれにはfireとかいろいろ入ってるけど、
-    // ここで作るのはそういうのが入ってない、完全版。
-    ptnArray.forEach((ptn) => {
-      // ここ、playerPositionにしたりどこか具体的な位置にしても面白そう。relとかで。
-      ptn.x += unit.position.x;
-      ptn.y += unit.position.y;
-      ptn.delay = unit.shotDelay; // ディレイ
-      ptn.move = unit.shotMove;
-      //ptn.behavior = {}; // ビヘイビア
-      //Object.assign(ptn.behavior, unit.shotBehavior); // アサインで作らないとコピー元がいじられてしまうの
-      // あとでObject.values使ってあれにする。
-      //ptn.shotSpeed = ptn.speed; // 基本、同じ速さ。
-      //ptn.shotDirection = ptn.direction; // 基本、飛んでく方向だろうと。
-      // ↑まずいよねぇ・・
-      //ptn.shotDelay = 0; // デフォルト
-      //ptn.shotBehavior = {}; // デフォルト
-      ptn.action = unit.shotAction; // 無くても[]が入るだけ
-      // 色、形関連
-      ptn.color = unit.shotColor;
-      ptn.shape = unit.shotShape;
-      // collisionFlag.
-      ptn.collisionFlag = unit.shotCollisionFlag; // 当然。
-      // ENEMY_BULLETの分裂で出来るのはENEMY_BULLET, PLAYER_BULLETの分裂でできるのはPLAYER_BULLET.
-      // これは向こうでやるべき
-      //if(ptn.collisionFlag === ENEMY_BULLET){ ptn.shotCollisionFlag = ENEMY_BULLET; }
-      //if(ptn.collisionFlag === PLAYER_BULLET){ ptn.shotCollisionFlag = PLAYER_BULLET; }
-      // ※shotCollisionFlagのデフォルトはENEMY_BULLETです。
-      // たとえばOFFがENEMYを作るときとか、collisionFlagはENEMYでこの上の2行は無視される。で、ENEMY_BULLETになる。
-      // PLAYERが出す場合はcollisionFlagのところがPLAYERになることがそもそもありえないのでありえない感じ。
-
-      // <<---重要--->> parentの設定。createUnitのときに設定される。
-      ptn.parent = unit;
-
-      //console.log(ptn.color.name);
-
-    })
-    // kindは廃止。draw関連はshapeプロパティで操作するので。
-    ptnArray.forEach((ptn) => {
-      createUnit(ptn); // 形を指定する。基本的にWedge.
-    })
-    // お疲れさまでした。
-  }
+  createUnit(ptn); // 形を指定する。基本的にWedge.
 }
 
 // ---------------------------------------------------------------------------------------- //
@@ -1937,16 +1715,7 @@ function parsePatternSeed(seed){
   if(seed.color !== undefined){ ptn.color = entity.drawColor[seed.color]; }
   if(seed.shape !== undefined){ ptn.shape = entity.drawShape[seed.shape]; }
 
-  // fireDefの展開
-  // Defを展開してdata.fireにnameの形で放り込む
-  // fireはseed.fireDef.name1:パターンデータ, .name2:パターンデータみたいな感じ。
-  data.fire = {};
-  if(seed.fireDef !== undefined){
-    Object.keys(seed.fireDef).forEach((name) => {
-      // いろいろ
-      data.fire[name] = seed.fireDef[name];
-    })
-  }
+  // fireDef廃止。
 
   // colliは未指定ならOFFでそうでないならENEMYでOK.
   // たとえばOFFにENEMY放らせたいならあとで指定してね。
@@ -2193,19 +1962,7 @@ function interpretCommand(data, command, index){
   }
 
   if(_type === "fire"){
-    // fire:名前, の名前を関数にするだけ。
-    // ライブラリに存在しない場合は自動的にデフォルトになる（書き忘れ対策）
-    // ここで翻訳すればいい。data.fire[name]にはfiredef[name]を入れておいて。
-    // で、dictがあるとき（command.fireの他にcommand.~~があるとき）、data.fire[name]の中の"$eee"を
-    // dict.eeeで置き換える。そんな感じ。dictって言ってもcommandの中のfire以外のプロパティのことだけど。
-    // 具体例
-    // fireDef:{ways:{nway:{count:"$count", interval:30}}} で {fire:"ways", count:4} みたいなね。
-    // dataにはactionも入っている？？
-    if(data.fire[command.fire] === undefined){ result.fire = createFirePattern({}); }
-    else{
-      let fireData = interpretNestedData(data.fire[command.fire], command);
-      result.fire = createFirePattern(fireData); // 変更
-    }
+    // fireするだけ
     return result;
   }
   // action.
@@ -2411,7 +2168,7 @@ function execute(unit, command){
     if(unit.isPlayer && !keyIsDown(32)){
       return false; // プレイヤーの場合はスペースキーが押されなければ離脱する。
     }
-    command.fire(unit);
+    executeFire(unit);
     unit.actionIndex++;
     return true; // 発射したら次へ！
   }
