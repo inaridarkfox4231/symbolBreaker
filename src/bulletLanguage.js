@@ -1834,6 +1834,12 @@ function createLineArray(seed, data){
   return result;
 }
 
+// 垂直方向にいくつか(distanceの位置を起点として垂直にいくつか)
+// function createVerticalArray(){}
+
+// 水平方向にいくつか(distanceの位置を中心に水平でいくつか)
+// function createHorizontalArray(){}
+
 function setBackNum(seedArray){
   // dataArrayの中のback持ってるオブジェクトのbackの文字列に対して
   // そこからいくつ遡ったら同じ文字列のcatchにたどり着くか調べてその値をひとつ減らして数とする。

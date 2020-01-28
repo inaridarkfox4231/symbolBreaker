@@ -224,29 +224,31 @@ function setup(){
     }
   })
 
-/*
-  // 折り返して15匹、パターンを変える。
+  // shotDistanceを80から400まで40ずつ増やして9匹出したあと40ずつ減らして8匹. 12フレーム間隔。
   mySystem.addPatternSeed({
-    x:0.2, y:0, speed:4, direction:0, shotSpeed:8, shotDirection:90, bgColor:"plorange",
+    x:0, y:-0.2, bgColor:"plorange", shotSpeed:8,
     action:{
-      main:[{hide:true}, {shotShape:"squareMiddle"}, {shotColor:"orange"},
-            {shotAction:["set", "attack1"]}, {short:"createEnemy"},
-            {speed:["set", 0]}, {wait:240}, {speed:["set", 4]},
+      main:[{hide:true}, {shotShape:"squareMiddle"}, {shotColor:"orange"}, {shotCollisionFlag:ENEMY},
+            {shotAction:["set", "attack1"]}, {short:"createEnemy"}, {wait:240},
             {shotAction:["set", "attack2"]}, {short:"createEnemy"}, {vanish:1}],
-      attack1:[{short:"pattern", fire:"way3"}],
-      attack2:[{shotAction:"stay"}, {short:"pattern", fire:"lineway3"}],
-      stay:[{speed:["set", 1, 30]}]
+      attack1:[{short:"preparation"}, {catch:"c"},
+               {nway:{count:3, interval:45}},
+               {wait:60}, {loop:3, back:"c"}, {speed:["set", 8, 30]}],
+      attack2:[{short:"preparation"}, {catch:"d"},
+               {nway:{count:5, interval:40, action:"line3"}},
+               {wait:60}, {loop:3, back:"d"}, {speed:["set", 8, 30]}],
+      line3:[{line:{count:3, upSpeed:0.2}}]
     },
     short:{
-      createEnemy:[{fire:""}, {wait:12}, {loop:7, back:2}, {fire:""}, {direction:["mirror", 90]},
-                    {wait:12}, {fire:""}, {loop:7, back:2}, {direction:["mirror", 90]}],
-      pattern:[{shotShape:"wedgeSmall"}, {shotColor:"dkorange"}, {shotSpeed:["set", 4]},
-               {speed:["set", 1, 30]}, {aim:5}, {fire:"$fire"}, {wait:60}, {loop:3, back:2},
-               {speed:["set", 8, 30]}]
-    },
-    fireDef:{way3:{nway:{count:3, interval:45}},
-             lineway3:{nway:{count:5, interval:40}, line:{count:3, upSpeed:0.2}}}
+      createEnemy:[{shotDistance:["set", 40]}, {catch:"a"},
+                   {shotDistance:["add", 40]}, {fire:""}, {wait:12}, {loop:9, back:"a"}, {catch:"b"},
+                   {shotDistance:["add", -40]}, {fire:""}, {wait:12}, {loop:8, back:"b"}],
+      preparation:[{shotShape:"wedgeSmall"}, {shotColor:"dkorange"},
+                   {shotSpeed:["set", 4]}, {direction:["set", 90]}, {speed:["set", 1, 60]}, {aim:5}]
+    }
   })
+
+/*
 
   // 上下に4発ずつline飛ばして止めてから90°方向に8line飛ばして消滅するパターン
   mySystem.addPatternSeed({
