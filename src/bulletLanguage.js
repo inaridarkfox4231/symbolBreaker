@@ -2159,7 +2159,7 @@ function interpretCommand(data, command, index){
   // だからgetTopKeyをもっと活用する必要があるかもね。
   const _type = getTopKey(command); // 最初のキーがそのままtypeになる。
   result.type = _type;
-  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance"].includes(_type)){
+  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance", "shotAim"].includes(_type)){
     result.mode = command[_type][0]; // "set" or "add" or "mirror" or etc...
     result[_type + "Change"] = command[_type][1]; // 3とか[2, 9]とか[1, 10, 1]
     // 長さが3の場合はcountを設定する。この場合、waitの変種となる。
@@ -2326,7 +2326,7 @@ function interpretNestedData(data, dict){
 
 function execute(unit, command){
   const _type = command.type;
-  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance"].includes(_type)){
+  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance", "shotAim"].includes(_type)){
     // speedとかshotDirectionとかいじる
     // 第2引数（3番目)がある場合。
     // まずループを抜けるかどうかはプロパティの有無で純粋に決まる。プロパティが無ければ抜けないで進む(true)。
@@ -2362,6 +2362,7 @@ function execute(unit, command){
       // たとえば["rel", 40]で自分のdirection+40がshotDirectionに設定される。
       if(_type === "shotSpeed"){ unit[_type] = unit.speed + newParameter; }
       if(_type === "shotDirection"){ unit[_type] = unit.direction + newParameter; }
+      if(_type === "shotAim"){ unit[_type] = unit.shotDirection + newParameter; }
     }else if(command.mode === "fromParent"){
       // shotDirection限定。親から自分に向かう方向に対していくつか足してそれを自分のshotDirectionとする。
       // つまり0なら親から自分に向かう方向ってことね。180だと逆。

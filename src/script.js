@@ -88,16 +88,17 @@ function setup(){
   })
 
   // デモ画面1. 90°ずつ回転するやつ。
-  // shotDirectionがアレなのでfollowで合わせるように。follow...これ設定時もshotDirection変えたいね。
+  // shotDirectionがアレなのでshotAim使ってね
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "way3burst"]}, {catch:"a"},
-            {catch:"b"}, {radial:{count:2}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
+            {catch:"b"}, {radial:{count:2, action:"aim"}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
             {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
-      way3burst:[{follow:true}, {wait:16}, {shotAction:["set", "fade"]},
+      way3burst:[{wait:16}, {shotAction:["set", "fade"]},
                  {nway:{count:3, interval:90}}, {vanish:1}],
-      fade:[{vanish:60}]
+      fade:[{vanish:60}],
+      aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
 
@@ -122,11 +123,12 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]}, {radial:{count:16}}],
+      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]},
+            {radial:{count:16, action:"aim"}}],
       flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
-              {shotDirection:["fromParent", 0]},
               {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120}}, {wait:6}, {loop:4, back:"b"},
-              {wait:16}, {loop:INF, back:"a"}]
+              {wait:16}, {loop:INF, back:"a"}],
+      aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
 /*
