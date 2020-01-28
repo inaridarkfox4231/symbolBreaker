@@ -2072,17 +2072,23 @@ function setBackNum(seedArray){
   for(let i = 0; i < seedArray.length; i++){
     const seed = seedArray[i];
     if(!seed.hasOwnProperty("back")){
+      // backがなければそのまま
       result.push(seed);
       continue;
     }
     const key = seed.back;
+    if(typeof(key) === "number"){
+      // backが計算済みならそのまま
+      result.push(seed);
+      continue;
+    }
     let n = 1;
     while(n < seedArray.length){
       const backSeed = seedArray[i - n];
       if(backSeed.hasOwnProperty("catch") && backSeed.catch === key){ break; } // catchプロパティが合致したらOK.
-      n++; // これないとやばいね。
+      n++; // これないと無限ループ。
     }
-    // seedのback変えちゃうとまずいんで。
+    // seedのback変えちゃうとまずいんでレプリカを作ります。
     let replica = {};
     Object.assign(replica, seed);
     replica.back = n - 1;

@@ -131,16 +131,17 @@ function setup(){
       aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
-/*
+
   // FALさんの13を書き直し。バリケード。もう過去には戻れない・・
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "barricade"]}, {fire:"set"}],
+      main:[{shotAction:["set", "barricade"]}, {shotDistance:["set", 120]},
+            {radial:{count:3, action:"aim"}}],
       barricade:[{move:"circular", bearing:1}, {bind:true}, {shotSpeed:["set", 10]},
-                 {fire:"rad4"}, {wait:1}, {loop:INF, back:2}]
-    },
-    fireDef:{set:{x:120, y:0, radial:{count:3}}, rad4:{radial:{count:4}}}
+                 {catch:"a"}, {radial:{count:4}}, {wait:1}, {loop:INF, back:"a"}],
+      aim:[{shotAim:["rel", 0]}, {fire:""}]
+    }
   })
 
 
@@ -151,93 +152,79 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotDirection:90, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "scatter"]}, {fire:"set"}, {wait:120},
-            {shotAction:["set", "scatterInv"]}, {fire:"set"}, {wait:120}, {loop:INF, back:-1}],
+      main:[{catch:"a"}, {shotDistance:["set", 50]},
+            {shotAction:["set", "scatter"]}, {radial:{count:2}}, {wait:120},
+            {shotAction:["set", "scatterInv"]}, {radial:{count:2}}, {wait:120},
+            {loop:INF, back:"a"}],
       scatter:[{short:"scatter", bearing:1.5, dirDiff:15}],
       scatterInv:[{short:"scatter", bearing:-1.5, dirDiff:-15}],
       trap:[{wait:60}, {speed:["set", 3, 120]}]
     },
     short:{
       scatter:[{move:"circular", bearing:"$bearing", radiusDiff:1}, {bind:true},
-               {wait:30}, {shotAction:["set","trap"]}, {shotSpeed:["set", 0.0001]},
-               {shotDirection:["fromParent", "$dirDiff"]}, {fire:""}, {wait:4}, {loop:INF, back:3}]
-    },
-    fireDef:{set:{x:50, y:0, radial:{count:2}}}
-  })
-
-  // 目標としているnway.
-  mySystem.addPatternSeed({
-    x:0.5, y:0.2, shotDirection:90, collisionFlag:ENEMY,
-    action:{
-      main:[{shotSpeed:["set", 4]}, {shotDirection:["add", -(6 - 1) * 20 / 2]},
-            {fire:""}, {shotSpeed:["add", 0.5]}, {shotDirection:["add", 20]}, {loop:6, back:3},
-            {shotDirection:["add", -(6 + 1) * 20 / 2]}, {wait:20}, {loop:INF, back:-1}]
+               {wait:30}, {shotAction:["set","trap"]}, {shotSpeed:["set", 0.0001]}, {catch:"b"},
+               {shotDirection:["fromParent", "$dirDiff"]}, {fire:""}, {wait:4}, {loop:INF, back:"b"}]
     }
   })
 
-  /*
-    完成形（イメージ）：actionの指定は文字列でもできるように改良するつもり。
-    main:[{nway:{count:6, interval:20, action:[{fire:""}]}}]
-    {nway:{count:6, interval:20, action:"way2"}}
-    way2:[{nway:{count:2, interval:3, action:""}}]  ""の場合は自動的に[{fire:""}]と解釈される。
-  */
-
-  // 従来のnway命令.
-  /*
+  // nwayとlineとradialを全部乗せる実験！
   mySystem.addPatternSeed({
-    x:0.5, y:0.2, shotDirection:90, shotSpeed:4, collisionFlag:ENEMY,
+    x:0.5, y:0.5, shotDirection:90, shotSpeed:2, collisionFlag:ENEMY,
     action:{
-      main:[{fire:"way6"}, {wait:20}, {loop:INF, back:-1}]
-    },
-    fireDef:{way6:{nway:{count:6, interval:20}}}
+      main:[{catch:"a"}, {nway:{count:6, interval:20, action:"line5"}}, {wait:60}, {loop:INF, back:"a"}],
+      line5:[{line:{count:5, upSpeed:0.4, action:"rad2"}}],
+      rad2:[{radial:{count:2}}]
+    }
   })
-  */
-/*
+
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
+  // shotDistance使って修正
   mySystem.addPatternSeed({
     x:0.5, y:0.2, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "fire"]},
-            {shotSpeed:["set", 0]}, {fire:""}, {wait:120},
-            {shotDirection:["set", 0]}, {shotSpeed:["set", 120]}, {fire:"rad2"}, {wait:120},
-            {loop:INF, back:-2}],
+            {shotSpeed:["set", 0]}, {catch:"a"}, {fire:""}, {wait:120},
+            {shotDirection:["set", 0]}, {shotDistance:["set", 120]},
+            {radial:{count:2}}, {shotDistance:["set", 0]}, {wait:120},
+            {loop:INF, back:"a"}],
       fire:[{hide:true}, {speed:["set", 0]}, {aim:0}, {shotSpeed:["set", 4]},
-            {fire:"way20"}, {wait:4}, {loop:20, back:2}, {vanish:1}]
-    },
-    fireDef:{way20:{nway:{count:13, interval:8}}, rad2:{radial:{count:2}}}
+            {catch:"b"}, {nway:{count:13, interval:8}}, {wait:4}, {loop:20, back:"b"}, {vanish:1}]
+    }
   })
 
   // ランダムに9匹？
   mySystem.addPatternSeed({
     x:0.5, y:-0.1,
     action:{
-      main:[{hide:true}, {shotAction:["set", "fireGo"]}, {shotShape:"squareMiddle"}, {shotColor:"grey"},
-            {short:"setEnemy1", dir:0}, {wait:240}, {short:"setEnemy1", dir:180}, {wait:240},
-            {loop:INF, back:-5}],
-      fireGo:[{shotShape:"wedgeSmall"}, {shotColor:"black"}, {shotSpeed:["set", 4]}, {aim:5},
-              {speed:["set", 6]}, {direction:["set", 90]}, {speed:["set", 1, 60]},
-              {fire:"way3"}, {wait:300}, {loop:INF, back:2}]
+      main:[{hide:true}, {shotColor:"grey"}, {shotShape:"squareMiddle"}, {shotCollisionFlag:ENEMY},
+            {shotAction:["set", "enemy1"]}, {catch:"a"},
+            {short:"setEnemy", dir:0}, {wait:180},
+            {short:"setEnemy", dir:180}, {wait:180}, {loop:INF, back:"a"}],
+      enemy1:[{shotShape:"wedgeSmall"}, {shotColor:"black"}, {shotSpeed:["set", 4]},
+              {speed:["set", 6]}, {direction:["set", 90]},
+              {speed:["set", 2, 60]}, {nway:{count:3, interval:30, action:"aim"}}],
+      aim:[{aim:5}, {fire:""}]
     },
-    short:{
-      setEnemy1:[{shotDirection:["set", "$dir"]}, {shotSpeed:["set", [60, 180]]},
-                 {fire:""}, {wait:16}, {loop:9, back:3}]
-    },
-    fireDef:{way3:{nway:{count:3, interval:45}}}
+    short:{setEnemy:[{shotDirection:["set", "$dir"]}, {catch:"b"}, {shotDistance:["set", [60, 180]]},
+                     {fire:""}, {wait:16}, {loop:9, back:"b"}]}
   })
+
 
   // デモ画面のカミソリrad8が4ずつ方向逆転するやつ
   mySystem.addPatternSeed({
-    x:0.5, y:0.5, shotSpeed:1, shotDirection:90, collisionFlag:ENEMY,
+    x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
-      main:[{short:"routine", dirDiff:4}, {short:"routine", dirDiff:-4}, {loop:INF, back:-1}]
+      main:[{catch:"a"}, {short:"routine", dirDiff:4}, {short:"routine", dirDiff:-4},
+            {loop:INF, back:"a"}]
     },
     short:{
-      routine:[{fire:"rad8"}, {shotDirection:["add", "$dirDiff"]}, {wait:8}, {loop:4, back:3}, {wait:16}]
-    },
-    fireDef:{rad8:{radial:{count:8}}}
+      routine:[{catch:"b"}, {radial:{count:8}}, {shotDirection:["add", "$dirDiff"]}, {wait:8},
+               {loop:4, back:"b"}, {wait:16}]
+    }
   })
 
+/*
   // 折り返して15匹、パターンを変える。
   mySystem.addPatternSeed({
     x:0.2, y:0, speed:4, direction:0, shotSpeed:8, shotDirection:90, bgColor:"plorange",
