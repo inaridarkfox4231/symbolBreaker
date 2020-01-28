@@ -366,6 +366,10 @@ nway. count:n, interval:itv
 {a_shotDirection:-(n - 1) * itv / 2} {catch:"nw1"}, {fire:""} {なんか} {a_shotDirection:itv} {loop:n, back:"nw1"}
 {a_shotDirection:-(n + 1) * itv / 2}
 
+[new AddCommand("shotDirection", -(n-1)*itv/2), IDLE_COMMAND, FireCommand(), なんか,
+new AddCommand("shotDirection", itv), new loopCommand(n, 数), new AddCommand("shotDirection", -(n+1)*itv/2)]
+って感じですかね。
+
 {nway:{count:n, interval:itv, action:{}{}{}}} ってあったらここをそれでいじる感じ。
 actionにwaitが入って無ければ一斉に発射されるし、入ってれば順繰りに発射されるし、shotDelayが増加する感じなら
 並べてから順繰りに発射されるしって感じね。

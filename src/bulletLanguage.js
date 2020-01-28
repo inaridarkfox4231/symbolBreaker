@@ -14,6 +14,9 @@ const COS_PENTA = [1, 0.30901699437494745, -0.8090169943749473, -0.8090169943749
 const SIN_PENTA = [0, 0.9510565162951535, 0.5877852522924732, -0.587785252292473, -0.9510565162951536];
 const ROOT_THREE_HALF = 0.8660254037844386; // √3/2.
 
+let nwayId = 0;
+let radialId = 0;
+let lineId = 0;  // catchの度に増やしていく
 
 // ---------------------------------------------------------------------------------------- //
 // createSystem.
@@ -1937,8 +1940,6 @@ function parsePatternSeed(seed){
     })
   }
 
-  // behaviorDefは廃止。
-
   // colliは未指定ならOFFでそうでないならENEMYでOK.
   // たとえばOFFにENEMY放らせたいならあとで指定してね。
   if(seed.collisionFlag === undefined){ ptn.collisionFlag = OFF; }else{ ptn.collisionFlag = ENEMY; }
@@ -1953,6 +1954,19 @@ function parsePatternSeed(seed){
     })
   }
 
+  // まずnway, line, radialがあればなんとかする（増やすかも）
+  // actionをキー配列の下から見ていって適宜シード列で置き換える感じ。下から出ないと失敗する。
+  // それが終わったら、loopとsignal(そのうちjumpやswitchも作りたい・・)に出てくるbackの文字列を
+  // どのくらい戻るかの整数で置き換える。というわけでもう-1記法は使わない。
+  /*
+  let preData = {};
+  for(let i = actionKeys.length - 1; i >= 0; i--){
+    const key = actionKeys[i];
+    preData[key] = extendPatternData(preData, seed.action[key]); // nwayやradialをあれする
+    setBackNum(preData[key]); // backを定数にする。
+  }
+  */
+
   // actionの内容を実行形式にする・・
   // 配列内のactionコマンドに出てくる文字列はすべて後者のものを参照しているので、
   // キー配列で後ろから見ていって・・
@@ -1966,6 +1980,14 @@ function parsePatternSeed(seed){
   // 最終的にdata.action.mainが求めるactionとなる。
   ptn.action = data.action.main;
   return ptn;
+}
+
+function extendPatternData(preData, ){
+
+}
+
+function setBackNum(dataArray){
+
 }
 
 // 展開関数作り直し。
@@ -2148,6 +2170,9 @@ function interpretCommand(data, command, index){
     }
     return result;
     // 自機に近付いたら次へ、みたいな場合は数を指定するかも？
+  }
+  if(_type === "catch"){
+    return result; // {type:"catch"}だけ。
   }
 }
 
@@ -2395,6 +2420,7 @@ function execute(unit, command){
       }
     }
   }
+  if(_type === "catch"){ unit.actionIndex++; return true; } // いわゆるスルー
 }
 
 // 反射

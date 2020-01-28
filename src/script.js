@@ -56,7 +56,7 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{shotAction:["set", "go"]}, {fire:"way4"}, {wait:4}, {loop:INF, back:2}],
+      main:[{catch:"a"}, {shotAction:["set", "go"]}, {fire:"way4"}, {wait:4}, {loop:INF, back:2}],
       go:[{wait:5}, {direction:["set", -90]}]
     },
     fireDef:{way4:{nway:{count:4, interval:25}}}
