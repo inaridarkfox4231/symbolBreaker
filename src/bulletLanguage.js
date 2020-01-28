@@ -26,6 +26,12 @@ function createSystem(w, h, unitCapacity){
   window["GO_MOVE"] = new GoMove();
   let _system = new System();
   window["entity"] = _system;
+  // デフォルトカラーとシェイプ
+  window["SQUARE_MIDDLE"] = entity.drawShape["squareMiddle"];
+  window["WEDGE_SMALL"] = entity.drawShape["wedgeSmall"];
+  window["PL_BLUE"] = entity.drawColor["plblue"];
+  window["BLUE"] = entity.drawColor["blue"];
+  // オブジェクトプール
   window["unitPool"] = new ObjectPool(() => { return new Unit(); }, unitCapacity);
   return _system;
 }
@@ -551,14 +557,15 @@ class Unit{
     this.shotDirection = 0; // 7.
     this.shotAim = 0; // 11.
     this.shotDelay = 0;
+    this.shotDistance = 0;  // ショットの初期位置（デフォは0,つまりunitの位置）
     this.shotMove = GO_MOVE; // デフォはGO.
     this.shotAction = [];
     this.shotCollisionFlag = ENEMY_BULLET; // 基本的にはショットのフラグは敵弾丸。いじるとき、いじる。
     // 色、形. デフォルトはこんな感じ。
-    this.shape = entity.drawShape["squareMiddle"]; // これ使ってdrawするからね。描画用クラス。 // 8.
-    this.color = entity.drawColor["plblue"]; // 9.
-    this.shotShape = entity.drawShape["wedgeSmall"];
-    this.shotColor = entity.drawColor["blue"];
+    this.shape = SQUARE_MIDDLE; // これ使ってdrawするからね。描画用クラス。 // 8.
+    this.color = PL_BLUE; // 9.
+    this.shotShape = WEDGE_SMALL;
+    this.shotColor = BLUE;
     this.drawParam = {}; // 描画用付加データは毎回初期化する
     // その他の挙動を制御する固有のプロパティ
     this.properFrameCount = 0;

@@ -159,6 +159,32 @@ function setup(){
     },
     fireDef:{set:{x:50, y:0, radial:{count:2}}}
   })
+
+  // 目標としているnway.
+  mySystem.addPatternSeed({
+    x:0.5, y:0.2, shotDirection:90, collisionFlag:ENEMY,
+    action:{
+      main:[{shotSpeed:["set", 4]}, {shotDirection:["add", -(6 - 1) * 20 / 2]},
+            {fire:""}, {shotSpeed:["add", 0.5]}, {shotDirection:["add", 20]}, {loop:6, back:3},
+            {shotDirection:["add", -(6 + 1) * 20 / 2]}, {wait:20}, {loop:INF, back:-1}]
+    }
+  })
+
+  /*
+    完成形（イメージ）：actionの指定は文字列でもできるように改良するつもり。
+    main:[{nway:{count:6, interval:20, action:[{fire:""}]}}]
+    {nway:{count:6, interval:20, action:"way2"}}
+    way2:[{nway:{count:2, interval:3, action:""}}]  ""の場合は自動的に[{fire:""}]と解釈される。
+  */
+
+  // 従来のnway命令.
+  mySystem.addPatternSeed({
+    x:0.5, y:0.2, shotDirection:90, shotSpeed:4, collisionFlag:ENEMY,
+    action:{
+      main:[{fire:"way6"}, {wait:20}, {loop:INF, back:-1}]
+    },
+    fireDef:{way6:{nway:{count:6, interval:20}}}
+  })
 /*
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
