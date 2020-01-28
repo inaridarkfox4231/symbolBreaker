@@ -393,6 +393,7 @@ class SelfUnit{
   prepareWeapon(weaponData){
     for(let i = 0; i < weaponData.length; i++){
       const myPtn = parsePatternSeed(weaponData[i]);
+      console.log(myPtn);
       this.ptnArray.push(myPtn);
     }
     // shiftKeyで変更。
@@ -435,6 +436,7 @@ class SelfUnit{
     this.color = (color !== undefined ? ptn.color : entity.drawColor["black"]);
     this.shotShape = (shotShape !== undefined ? ptn.shotShape : entity.drawShape["wedgeSmall"]);
     this.shotDelay = (shotDelay !== undefined ? ptn.shotDelay : 0);
+    this.shotDistance = 0; // これがないと発射できないよ
     // actionをセット。
     this.action = ptn.action;
     this.actionIndex = 0;
@@ -1795,6 +1797,7 @@ function createFirePattern(data){
     // そして、nwayとかradialとかlineは間に一つまでactionを挟む形で反復処理で実現する。
     // たとえばradialでセットする弾丸のshotDirectionを90ずつ変えたいとかそういうときに重宝するイメージ。
 
+/*
     if(data.hasOwnProperty("formation")){
       // 指定する場合
       ptnArray = getFormation(data.formation);
@@ -1808,6 +1811,11 @@ function createFirePattern(data){
     // この時点で[{x:~~, y:~~}]の列ができている。回転させて正面にもってくる。
     // このとき発射方向に合わせて回転する。
     fitting(ptnArray, unit.shotDirection);
+*/
+    ptnArray.push({
+      x:(cos(unit.shotDirection) * unit.shotDistance),
+      y:(sin(unit.shotDirection) * unit.shotDistance)
+    });
 
     // 速度を設定. bend廃止。
     ptnArray.forEach((ptn) => {
@@ -1958,14 +1966,13 @@ function parsePatternSeed(seed){
   // actionをキー配列の下から見ていって適宜シード列で置き換える感じ。下から出ないと失敗する。
   // それが終わったら、loopとsignal(そのうちjumpやswitchも作りたい・・)に出てくるbackの文字列を
   // どのくらい戻るかの整数で置き換える。というわけでもう-1記法は使わない。
-  /*
+
   let preData = {};
   for(let i = actionKeys.length - 1; i >= 0; i--){
     const key = actionKeys[i];
-    preData[key] = extendPatternData(preData, seed.action[key]); // nwayやradialをあれする
-    setBackNum(preData[key]); // backを定数にする。
+    preData[key] = expandPatternData(preData, seed.action[key]); // nwayやradialをあれする
+    preData[key] = setBackNum(preData[key]); // backを定数にする。
   }
-  */
 
   // actionの内容を実行形式にする・・
   // 配列内のactionコマンドに出てくる文字列はすべて後者のものを参照しているので、
@@ -1973,7 +1980,7 @@ function parsePatternSeed(seed){
   // 得られた翻訳結果は順繰りにdata.actionに放り込んでいくイメージ。
   data.action = {}; // これがないと記法的にアウト
   for(let i = actionKeys.length - 1; i >= 0; i--){
-    data.action[actionKeys[i]] = createAction(data, seed.action[actionKeys[i]]);
+    data.action[actionKeys[i]] = createAction(data, preData[actionKeys[i]]);
   }
   // 配列はもう出てこないのでcreateActionの内容も大幅に書き換えることになる。
   // たとえば2番目のactionの配列を実行形式にするのに3番目以降のactionの実行形式のデータが使えるとかそういう感じ。
@@ -1982,12 +1989,108 @@ function parsePatternSeed(seed){
   return ptn;
 }
 
-function extendPatternData(preData, ){
-
+function expandPatternData(preData, seedArray){
+  // action:"uuu" で preData.uuuを放り込むような場合にpreDataが役に立つイメージ。
+  let result = [];
+  for(let i = 0; i < seedArray.length; i++){
+    const seed = seedArray[i];
+    const _type = getTopKey(seed);
+    switch(_type){
+      case "nway":
+        const parsed1 = createNwayArray(seed, preData);
+        result.push(...parsed1);
+        break;
+      case "radial":
+        const parsed2 = createRadialArray(seed, preData);
+        result.push(...parsed2);
+        break;
+      case "line":
+        const parsed3 = createLineArray(seed, preData);
+        result.push(...parsed3);
+        break;
+      default:
+        result.push(seed);
+    }
+  }
+  return result;
 }
 
-function setBackNum(dataArray){
+function createNwayArray(seed, data){
+  // count, interval, action:"hoge" ← data.hoge.
+  let result = [];
+  const {count, interval, action} = seed.nway;
+  result.push({shotDirection:["add", -(count - 1) * interval / 2]});
+  result.push({catch:("nway" + nwayId)});
+  if(action === ""){
+    result.push({fire:""});
+  }else{
+    result.push(...data[action]);
+  }
+  result.push({shotDirection:["add", interval]});
+  result.push({loop:count, back:("nway" + nwayId)});
+  result.push({shotDirection:["add", -(count + 1) * interval / 2]}); // 戻す
+  nwayId++;  // id増やしておく。
+  return result;
+}
 
+function createRadialArray(seed, data){
+  // count, action = "hoho" ← data.hoho.
+  let result = [];
+  const {count, action} = seed.radial;
+  result.push({catch:("radial" + radialId)});
+  if(action === ""){
+    result.push({fire:""});
+  }else{
+    result.push(...data[action]);
+  }
+  result.push({shotDirection:["add", 360 / count]}); // 負の数で逆回転
+  result.push({loop:count, back:("radial" + radialId)});
+  radialId++;
+  return result;
+}
+
+function createLineArray(seed, data){
+  // count, upSpeed, action = "fikk" ← data.fikk.
+  let result = [];
+  const {count, upSpeed, action} = seed.line;
+  result.push({catch:("line" + lineId)});
+  if(action === ""){
+    result.push({fire:""});
+  }else{
+    result.push(...data[action]);
+  }
+  result.push({shotSpeed:["add", upSpeed]});
+  result.push({loop:count, back:("line" + lineId)});
+  result.push({shotSpeed:["add", upSpeed * (-1) * count]}); // 戻す
+  lineId++;
+  return result;
+}
+
+function setBackNum(seedArray){
+  // dataArrayの中のback持ってるオブジェクトのbackの文字列に対して
+  // そこからいくつ遡ったら同じ文字列のcatchにたどり着くか調べてその値をひとつ減らして数とする。
+  let result = [];
+  for(let i = 0; i < seedArray.length; i++){
+    const seed = seedArray[i];
+    if(!seed.hasOwnProperty("back")){
+      result.push(seed);
+      continue;
+    }
+    const key = seed.back;
+    let n = 1;
+    while(n < seedArray.length){
+      const backSeed = seedArray[i - n];
+      if(backSeed.hasOwnProperty("catch") && backSeed.catch === key){ break; } // catchプロパティが合致したらOK.
+      n++; // これないとやばいね。
+    }
+    // seedのback変えちゃうとまずいんで。
+    let replica = {};
+    Object.assign(replica, seed);
+    replica.back = n - 1;
+    result.push(replica);
+  }
+  //console.log(result);
+  return result;
 }
 
 // 展開関数作り直し。
@@ -2057,7 +2160,7 @@ function interpretCommand(data, command, index){
   // だからgetTopKeyをもっと活用する必要があるかもね。
   const _type = getTopKey(command); // 最初のキーがそのままtypeになる。
   result.type = _type;
-  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay"].includes(_type)){
+  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance"].includes(_type)){
     result.mode = command[_type][0]; // "set" or "add" or "mirror" or etc...
     result[_type + "Change"] = command[_type][1]; // 3とか[2, 9]とか[1, 10, 1]
     // 長さが3の場合はcountを設定する。この場合、waitの変種となる。
@@ -2224,7 +2327,7 @@ function interpretNestedData(data, dict){
 
 function execute(unit, command){
   const _type = command.type;
-  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay"].includes(_type)){
+  if(["speed", "direction", "shotSpeed", "shotDirection", "shotDelay", "shotDistance"].includes(_type)){
     // speedとかshotDirectionとかいじる
     // 第2引数（3番目)がある場合。
     // まずループを抜けるかどうかはプロパティの有無で純粋に決まる。プロパティが無ければ抜けないで進む(true)。

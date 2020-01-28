@@ -56,17 +56,17 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{catch:"a"}, {shotAction:["set", "go"]}, {fire:"way4"}, {wait:4}, {loop:INF, back:2}],
+      main:[{shotAction:["set", "go"]}, {catch:"a"}, {nway:{count:4, interval:25, action:""}},
+            {wait:4}, {loop:INF, back:"a"}],
       go:[{wait:5}, {direction:["set", -90]}]
-    },
-    fireDef:{way4:{nway:{count:4, interval:25}}}
+    }
   };
   // レーザー撃ってみよう。60フレーム経たないと再発射できない。
 
   weaponData[weaponCapacity++] = {
     shotSpeed:0.1, color:"dkskblue",
     action:{
-      main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:60}, {loop:INF, back:2}],
+      main:[{shotAction:["set", "laserUnit"]}, {catch:"a"}, {fire:""}, {wait:60}, {loop:INF, back:"a"}],
       laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
                  {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
                  {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
@@ -79,25 +79,26 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
     action:{
-      main:[{short:"waygun", count:3}, {short:"waygun", count:5},
+      main:[{catch:"a"},
+            {short:"waygun", count:3}, {short:"waygun", count:5},
             {short:"waygun", count:7}, {short:"waygun", count:9},
-            {wait:16}, {loop:INF, back:-1}]
+            {wait:16}, {loop:INF, back:"a"}]
     },
-    short:{waygun:[{fire:"waygun", count:"$count"}, {wait:4}, {shotDirection:["add", 5]}]},
-    fireDef:{waygun:{nway:{count:"$count", interval:20}}}
+    short:{waygun:[{nway:{count:"$count", interval:20, action:""}}, {wait:4}, {shotDirection:["add", 5]}]}
   })
 
-
   // デモ画面1. 90°ずつ回転するやつ。
+  // shotDirectionがアレなのでfollowで合わせるように。follow...これ設定時もshotDirection変えたいね。
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "way3burst"]}, {fire:"rad2"}, {wait:8}, {loop:10, back:2}, {wait:32},
-            {shotDirection:["add", 45]}, {loop:INF, back:-2}],
-      way3burst:[{wait:16}, {shotAction:["set", "fade"]}, {fire:"way3"}, {vanish:1}],
+      main:[{shotAction:["set", "way3burst"]}, {catch:"a"},
+            {catch:"b"}, {radial:{count:2, action:""}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
+            {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
+      way3burst:[{follow:true}, {wait:16}, {shotAction:["set", "fade"]},
+                 {nway:{count:3, interval:90, action:""}}, {vanish:1}],
       fade:[{vanish:60}]
-    },
-    fireDef:{way3:{nway:{count:3, interval:90}}, rad2:{radial:{count:2}}}
+    }
   })
 
   // 新しいcircularの実験中。FALさんの4を書き直し。
@@ -108,7 +109,8 @@ function setup(){
       main:[{shotAction:["set", "sweeping"]}, {fire:"rad2"}],
       sweeping:[{speed:["set", 0.001, 30]}, {move:"circular", bearing:-3},
                 {bind:true}, {shotDirection:["rel", 0]},
-                {shotSpeed:["set", 2]}, {fire:""}, {wait:1}, {shotDirection:["add", 12]}, {loop:INF, back:3}]
+                {shotSpeed:["set", 2]},
+                {catch:"a"}, {fire:""}, {wait:1}, {shotDirection:["add", 12]}, {loop:INF, back:"a"}]
     },
     fireDef:{rad2:{radial:{count:2}}}
   })
@@ -117,16 +119,19 @@ function setup(){
   // followとかbendとか面倒な事をしない場合、射出方向は撃ちだしたときのshotDirection(この場合0)を
   // radialで回転させたものに、要するに配置時の中心から外側への方向。それが固定されたままくるくる回る仕組み。
   // それがあのthis.bearingの意味だとすればこれでよいのだろうね。(つまり各unitのshotDirectionは固定！)
+
   mySystem.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "flower"]}, {fire:"set"}],
+      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]},
+            {radial:{count:16, action:""}}],
       flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
-              {fire:"way2"}, {wait:6}, {loop:4, back:2}, {wait:16}, {loop:INF, back:4}]
-    },
-    fireDef:{set:{x:120, y:0, radial:{count:16}}, way2:{nway:{count:2, interval:120}}}
+              {shotDirection:["fromParent", 0]},
+              {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120, action:""}}, {wait:6}, {loop:4, back:"b"},
+              {wait:16}, {loop:INF, back:"a"}]
+    }
   })
-
+/*
   // FALさんの13を書き直し。バリケード。もう過去には戻れない・・
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
@@ -178,6 +183,7 @@ function setup(){
   */
 
   // 従来のnway命令.
+  /*
   mySystem.addPatternSeed({
     x:0.5, y:0.2, shotDirection:90, shotSpeed:4, collisionFlag:ENEMY,
     action:{
@@ -185,6 +191,7 @@ function setup(){
     },
     fireDef:{way6:{nway:{count:6, interval:20}}}
   })
+  */
 /*
   // ボスの攻撃
   // 20発ガトリングを13way, これを真ん中から放ったり、両脇から放ったり。
