@@ -328,6 +328,23 @@ shotShapeとshotColorも事前に決めておくものじゃないかな・・�
 s_shotColor:"red"とかs_shotColor:"blue"の他にs_shotColor:"self"で複製できるようにしようね。
 s_shotShape:"self"にすると同じものが入る。
 
-unit.shotDirectionは発射する方向。
+unit.shotDirectionは発射する方向。位置を決めるための情報。
 unit.ptn.directionは発射した弾丸や敵の初期の移動方向。これらは違う概念なのです。
 これを区別するようにすればbendは必要ないね・・
+ptnのptn??
+bend要らないってのは正しいよ。だって撃ちだした後で90°曲げればいいんでしょ・・
+そもそもbendってインチキコードでサーキュラー作るとき苦し紛れに導入した奴だから
+サーキュラー完成した今となっては用済み、廃止していいと思う。bend廃止。
+
+formationのfrontVerticalでもいいけどnwayの方がいいかもかな・・敵作るときは使うけど。
+nwayにしてshotにdirectionを90にしてもらうだけでいいと思う。
+shotshotDirectionだと語呂が悪いからshotAimにしてshotAimがshotのshotDirectionに設定されるとかそういう。
+で、shotのshotSpeedはspeedといっしょで。
+shotAimはパターン設定の際はshotDirectionを初期設定とする。で、変えたいときは適宜。
+
+createFirePatternは最終的に廃止する。
+
+shotAimでaim使ってプレイヤーの方向を定めたうえで発射すればショットのshotDirectionはそれになるから
+撃ちだした後その方向に一斉にバーストできるよ・・もっともあれ実現するための無理やり感はあるけど。
+あとshotの撃ちだし方向を90ずついじるってのもradialにaction挟むやつで実現できる。
+a_shotAimみたいな書き方になりそうな。

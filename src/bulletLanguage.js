@@ -549,6 +549,7 @@ class Unit{
     // bulletを生成する際に使うプロパティ
     this.shotSpeed = 0; // 6.
     this.shotDirection = 0; // 7.
+    this.shotAim = 0; // 11.
     this.shotDelay = 0;
     this.shotMove = GO_MOVE; // デフォはGO.
     this.shotAction = [];
@@ -595,6 +596,8 @@ class Unit{
       if(ptn[propName] !== undefined){ this[propName] = ptn[propName]; } // 確定は済んでる
     })
     this.velocityUpdate(); // 速度が決まる場合を考慮する
+
+    this.shotAim = this.shotDirection;
 
     // ノンデフォルトの場合に変更します（自分と同じものを出す場合は個別に決めてね。）
     if(ptn.color !== undefined){ this.color = ptn.color; }
@@ -1796,17 +1799,14 @@ function createFirePattern(data){
     // このとき発射方向に合わせて回転する。
     fitting(ptnArray, unit.shotDirection);
 
-    // 速度を設定
-    // ここ、同じ方向当てはめるようになってるけど、いっせいにある角度だけ
-    // 回転させるようにするとかのオプションがあってもいいかもしれない。
+    // 速度を設定. bend廃止。
     ptnArray.forEach((ptn) => {
       ptn.speed = unit.shotSpeed;
-      ptn.direction = unit.shotDirection + (data.hasOwnProperty("bend") ? data.bend : 0);
+      ptn.direction = unit.shotDirection;
+      ptn.shotDirection = unit.shotAim; // ???
       // 一旦廃止
-      // そのうちunit.ptn.shotSpeedとunit.ptn.shotDirectionにするつもり。?
-      // あれ・・unit.shotDirectionとunit.ptn.directionを分ければbend要らないのでは・・・？はっ！！
       ptn.shotSpeed = ptn.speed;
-      ptn.shotDirection = ptn.direction;
+      // ptn.shotDirection = ptn.direction; // unit.shotShotDirection??
     })
 
     // このタイミングでunitのshotSpeedなどに指定があるなら一斉に適用する。でなければデフォルト値を使う。
