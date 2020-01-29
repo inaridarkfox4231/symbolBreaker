@@ -69,7 +69,7 @@ function setup(){
       main:[{shotAction:["set", "laserUnit"]}, {catch:"a"}, {fire:""}, {wait:60}, {loop:INF, back:"a"}],
       laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
                  {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
-                 {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
+                 {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:true}],
       calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
     }
   };
@@ -97,8 +97,8 @@ function setup(){
             {wait:8}, {loop:10, back:"b"}, {wait:32},
             {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
       way3burst:[{wait:16}, {shotAction:["set", "fade"]},
-                 {nway:{count:3, interval:90}}, {vanish:1}],
-      fade:[{vanish:60}],
+                 {nway:{count:3, interval:90}}, {vanish:true}],
+      fade:[{wait:60}, {vanish:true}],
     }
   })
 
@@ -187,7 +187,7 @@ function setup(){
             {radial:{count:2}}, {shotDistance:["set", 0]}, {wait:120},
             {loop:INF, back:"a"}],
       fire:[{hide:true}, {speed:["set", 0]}, {aim:0}, {shotSpeed:["set", 4]},
-            {catch:"b"}, {nway:{count:13, interval:8}}, {wait:4}, {loop:20, back:"b"}, {vanish:1}]
+            {catch:"b"}, {nway:{count:13, interval:8}}, {wait:4}, {loop:20, back:"b"}, {vanish:true}]
     }
   })
 
@@ -227,7 +227,7 @@ function setup(){
     action:{
       main:[{hide:true}, {shotShape:"squareMiddle"}, {shotColor:"orange"}, {shotCollisionFlag:ENEMY},
             {shotAction:["set", "attack1"]}, {short:"createEnemy"}, {wait:240},
-            {shotAction:["set", "attack2"]}, {short:"createEnemy"}, {vanish:1}],
+            {shotAction:["set", "attack2"]}, {short:"createEnemy"}, {vanish:true}],
       attack1:[{short:"preparation"}, {catch:"c"},
                {nway:{count:3, interval:45}},
                {wait:60}, {loop:3, back:"c"}, {speed:["set", 8, 30]}],

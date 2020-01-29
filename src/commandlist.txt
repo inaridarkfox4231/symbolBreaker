@@ -32,4 +32,39 @@ shotDelay
 
 shotDistance
 {shotDistance:["set", 40]} 40にする
-{shotDistance:["set", 60]} 60たす
+{shotDistance:["add", 60]} 60たす
+
+shotAim
+{shotAim:["set", 90]} 90にする
+{shotAim:["add", 90]} 90たす
+
+shotColor
+{shotColor:"blue"} entity.drawColor["blue"]にする
+
+shotShape
+{shotShape:"wedgeSmall"} entity.drawShape["wedgeSmall"]にする
+
+collisionFlag
+{collisionFlag:ENEMY} ENEMYにする
+
+shotCollisionFlag
+{shotCollisionFlag:ENEMY_BULLET} ENEMY_BULLETにする
+shotCollisionFlagは自動的に設定されないけどENEMY_BULLET→ENEMY_BULLET, PLAYER_BULLET→PLAYER_BULLETの
+ルーチンは設定されてる
+
+move, shotMove
+{move:"go"}{shotMove:"go"} goにする、みたいな。
+{move:"circular", bearing:1} これとかね。この場合、これそのまんまコンストラクタに放り込まれてクラスが生成される。
+
+fire
+{fire:""} もうこんだけね・・
+たとえばだけど、{fire:true, count:5, interval:20}で20フレーム間隔で5発まで撃つとか、
+{fire:true, count:INF, interval:4}で4フレーム間隔で無限に撃ち続けるとか、{fire:false}でやめるとか
+できたら面白そうね。1発だけ撃つ場合は{fire:true, count:1}みたいな。単に{fire:true}なら・・
+{fire:true, count:5}ならintervalのデフォが1になる。で、5発撃つとおわり。
+{fire:true}ならcount,intervalのデフォが1,0になる。従来のfireはこれ。
+どうしよ・・迷うね・・・これだったらたとえばshotDistanceを徐々に変化っていうのも組み合わせれば記述が簡潔に・・？
+撃つタイミングはactionのあと。だから、命令すればそのターンで発射できる。
+
+shotAction
+{shotAction:["set", ]}

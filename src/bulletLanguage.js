@@ -576,7 +576,6 @@ class Unit{
     this.properFrameCount = 0;
     this.vanishFlag = false; // trueなら、消す。
     this.hide = false; // 隠したいとき // appearでも作る？disappearとか。それも面白そうね。ステルス？・・・
-    this.follow = false; // behaviorの直後、actionの直前のタイミングでshotDirectionをdirectionで更新する。
     // 衝突判定関連
     this.collisionFlag = ENEMY_BULLET; // default. ENEMY, PLAYER_BULLETの場合もある。 // 10.
     // colliderがcircleでなくなってる場合は新たにCircleColliderを生成して当てはめる。
@@ -666,8 +665,6 @@ class Unit{
     if(this.delay > 0){ return; }
     // previousPositionをセット
     this.setPreviousPosition();
-    // followがtrueの場合はshotDirectionをいじる
-    if(this.follow){ this.shotDirection = this.direction; }
     // moveとframeOutCheck.
     this.move.execute(this);
     this.frameOutCheck();
@@ -2002,15 +1999,11 @@ function interpretCommand(data, command, index){
     return result;
   }
   if(_type === "aim"){ result.margin = command.aim; return result; } // 狙う際のマージン
-  if(_type === "vanish"){ result.vanishDelay = command.vanish; return result; } // 消えるまでのディレイ
+  if(_type === "vanish"){ result.flag = command.vanish; return result; } // true.
   if(_type === "hide"){
     // 隠れる. trueのとき見えなくする。falseで逆。
     //console.log(command.hide);
     result.flag = command.hide; return result;
-  }
-  if(_type === "follow"){
-    // followをonoffにする
-    result.flag = command.follow; return result;
   }
   if(_type === "bind"){
     // bindをtruefalseにする
@@ -2275,18 +2268,13 @@ function execute(unit, command){
     return true; // ループは抜けない
   }
   if(_type === "vanish"){
-    // vanishDelayまで何もしない、そのあと消える。デフォルトは1. {vanish:1}ですぐ消える。
-    if(unit.counter.loopCheck(command.vanishDelay)){ unit.vanishFlag = true; }
+    // flagを当てはめるだけ。
+    unit.vanishFlag = command.flag;
     return false; // ループを抜ける
   }
   if(_type === "hide"){
     // 関数で分けて書きたいね・・
     unit.hide = command.flag;
-    unit.actionIndex++;
-    return true; // ループは抜けない
-  }
-  if(_type === "follow"){
-    unit.follow = command.flag;
     unit.actionIndex++;
     return true; // ループは抜けない
   }
