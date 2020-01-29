@@ -67,4 +67,9 @@ fire
 撃つタイミングはactionのあと。だから、命令すればそのターンで発射できる。
 
 shotAction
-{shotAction:["set", ]}
+{shotAction:["set", "name"]} name:[]をぶちこむ
+
+vanish
+{vanish:true}で消えてくれる
+フラグ系もセットでなんとかなるんだけどね。名前から直接操作したいからね。
+vanishFlag→vanishに改名。

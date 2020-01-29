@@ -116,7 +116,7 @@ class System{
 	initialize(){
 		this.player.initialize();
     this.unitArray.loopReverse("flagOff"); // 先に衝突フラグを消す
-    this.unitArray.loopReverse("vanish");  // unitすべて戻す
+    this.unitArray.loopReverse("vanishAction");  // unitすべて戻す
     this.drawGroup = {};
 	}
   registColor(name, _color, damageFactor = 1, lifeFactor = 1){
@@ -143,7 +143,7 @@ class System{
     for(let i = 0; i < this.unitArray.length; i++){
       const u = this.unitArray[i];
       if(!u.collider.inFrame()){ continue; } // inFrame「でない」ならば考慮しない
-      if(u.vanishFlag){ continue; } // vanishFlag「である」ならば考慮しない
+      if(u.vanish){ continue; } // vanish「である」ならば考慮しない
       if(u.hide){ continue; } // hide状態なら考慮しない
       this._qTree.addActor(u);
     }
@@ -208,8 +208,8 @@ class System{
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
-          // 両方ともvanishFlagがfalseならば判定する。
-          if(!obj1.vanishFlag && !obj2.vanishFlag){
+          // 両方ともvanishがfalseならば判定する。
+          if(!obj1.vanish && !obj2.vanish){
             obj1.hit(obj2);
             obj2.hit(obj1);
           }
@@ -235,7 +235,7 @@ class System{
         const hit = this._detector.detectCollision(collider1, collider2);
 
         if(hit) {
-          if(!obj.vanishFlag && !cellObj.vanishFlag){
+          if(!obj.vanish && !cellObj.vanish){
             obj.hit(cellObj);
             cellObj.hit(obj);
           }
@@ -386,7 +386,7 @@ class SelfUnit{
     this.life = this.maxLife;
     this.healCount = 0;     // ヒールカウントシステム。キー入力の際に+1され、maxに達するとHPが1増える
     this.maxHealCount = 20; // maxの値
-    this.vanishFlag = false;
+    this.vanish = false;
     this.prepareWeapon(weaponData);
 		this.initialize();
 	}
@@ -415,7 +415,7 @@ class SelfUnit{
     this.life = this.maxLife;
     this.healCount = 0; // ヒールカウント
     this.maxHealCount = 20; // 20回移動するたびにHPが1回復する
-    this.vanishFlag = false;
+    this.vanish = false;
 	}
 	setPosition(x, y){
 		this.position.set(x, y);
@@ -448,7 +448,7 @@ class SelfUnit{
     this.setPattern(this.ptnArray[this.ptnIndex]);
   }
 	update(){
-    if(this.vanishFlag){ return; }
+    if(this.vanish){ return; }
 		this.rotationAngle += this.rotationSpeed;
     const {x, y} = this.position;
 	  if(keyIsDown(LEFT_ARROW)){ this.position.x -= this.speed; }
@@ -475,16 +475,16 @@ class SelfUnit{
     const newParticle = new Particle(this.position.x, this.position.y, 20, this.color);
     entity.particleArray.add(newParticle);
     this.life = 0;
-    this.vanishFlag = true;
+    this.vanish = true;
   }
   hit(unit){
     //console.log("player hit!");
-    // unitからダメージ量を計算してhitPointをupdateして0以下になるようなら消滅する（vanishFlag必要）。
+    // unitからダメージ量を計算してhitPointをupdateして0以下になるようなら消滅する（vanish必要）。
     // unitと違って単にエフェクト出して描画されなくなるだけにする。
     this.lifeUpdate(-unit.damage);
   }
   execute(){
-    if(this.vanishFlag){ return; }
+    if(this.vanish){ return; }
     // アクションの実行（処理が終了しているときは何もしない）（vanish待ちのときも何もしない）
     if(this.action.length > 0 && this.actionIndex < this.action.length){
       let debug = 0; // デバッグモード
@@ -508,7 +508,7 @@ class SelfUnit{
 		this.position.y = constrain(this.position.y, 5, AREA_HEIGHT - 5);
 	}
 	draw(){
-    if(this.vanishFlag){ return; }
+    if(this.vanish){ return; }
 		const {x, y} = this.position;
 		const c = cos(this.rotationAngle) * this.size;
 		const s = sin(this.rotationAngle) * this.size;
@@ -574,7 +574,7 @@ class Unit{
     this.drawParam = {}; // 描画用付加データは毎回初期化する
     // その他の挙動を制御する固有のプロパティ
     this.properFrameCount = 0;
-    this.vanishFlag = false; // trueなら、消す。
+    this.vanish = false; // trueなら、消す。
     this.hide = false; // 隠したいとき // appearでも作る？disappearとか。それも面白そうね。ステルス？・・・
     // 衝突判定関連
     this.collisionFlag = ENEMY_BULLET; // default. ENEMY, PLAYER_BULLETの場合もある。 // 10.
@@ -638,9 +638,9 @@ class Unit{
     }
   }
   eject(){
-    if(this.vanishFlag){ this.vanish(); }
+    if(this.vanish){ this.vanishAction(); }
   }
-  vanish(){
+  vanishAction(){
     // 複数ある場合っての今回出て来てるので・・うん。うしろから。
     // とにかくね、remove関連は後ろからなのよ・・でないとやっぱバグるのよね。
     for(let i = this.belongingArrayList.length - 1; i >= 0; i--){
@@ -660,7 +660,7 @@ class Unit{
   }
   update(){
     // vanishのときはスルー
-    if(this.vanishFlag){ return; }
+    if(this.vanish){ return; }
     // delay処理（カウントはexecuteの方で減らす・・分離されてしまっているので。）
     if(this.delay > 0){ return; }
     // previousPositionをセット
@@ -682,7 +682,7 @@ class Unit{
     const {x, y} = this.position;
     if(x < -AREA_WIDTH * 0.2 || x > AREA_WIDTH * 1.2 || y < -AREA_HEIGHT * 0.2 || y > AREA_HEIGHT * 1.2){
       this.flagOff(); // これにより外側で消えたときにパーティクルが出現するのを防ぐ
-      this.vanishFlag = true;
+      this.vanish = true;
     }
   }
   lifeUpdate(diff){
@@ -690,7 +690,7 @@ class Unit{
     if(this.life > this.maxLife){ this.life = this.maxLife; }
     if(this.life > 0){ return; }
     this.life = 0;
-    this.vanishFlag = true;
+    this.vanish = true;
   }
   hit(unit){
     const flag = this.collisionFlag;
@@ -702,7 +702,7 @@ class Unit{
         // レーザーはスリップなので小さくする
         createParticle(this, unit, 2.0, 15, 4, 2);
       }
-      if(this.collider.type === "circle"){ this.vanishFlag = true; } // サークルなら衝突で消える
+      if(this.collider.type === "circle"){ this.vanish = true; } // サークルなら衝突で消える
       return;
     }else if(flag === ENEMY || flag === PLAYER){
       this.lifeUpdate(-unit.damage);
@@ -711,12 +711,12 @@ class Unit{
   }
   execute(){
     // vanishのときはスルー
-    if(this.vanishFlag){ return; }
+    if(this.vanish){ return; }
     // delay処理. カウントはこっちで減らす。
     if(this.delay > 0){ this.delay--; return; }
     if(this.bind){
       // bindの場合、親が死んだら死ぬ。
-      if(this.parent.vanishFlag){ this.vanishFlag = true; return; }
+      if(this.parent.vanish){ this.vanish = true; return; }
     }
     // 以下の部分をexecuteとして切り離す
     // アクションの実行（処理が終了しているときは何もしない）（vanish待ちのときも何もしない）
@@ -739,7 +739,7 @@ class Unit{
     this.properFrameCount++;
   }
   draw(){
-    if(this.hide || this.vanishFlag){ return; } // hide === trueのとき描画しない
+    if(this.hide || this.vanish){ return; } // hide === trueのとき描画しない
     //this.drawModule.draw(this);
     this.shape.draw(this);
     if(this.collisionFlag === ENEMY){
@@ -837,9 +837,9 @@ class Particle{
 		})
 	}
   eject(){
-    if(!this.alive){ this.vanish(); }
+    if(!this.alive){ this.vanishAction(); }
   }
-  vanish(){
+  vanishAction(){
     this.belongingArray.remove(this);
   }
 }
@@ -2269,7 +2269,7 @@ function execute(unit, command){
   }
   if(_type === "vanish"){
     // flagを当てはめるだけ。
-    unit.vanishFlag = command.flag;
+    unit.vanish = command.flag;
     return false; // ループを抜ける
   }
   if(_type === "hide"){
@@ -2299,8 +2299,8 @@ function execute(unit, command){
   }
   if(_type === "signal"){
     if(command.mode === "vanish"){
-      // parentのvanishFlagを参照してfalseならそのまま抜けるがtrueなら次へ進む
-      if(unit.parent.vanishFlag){
+      // parentのvanishを参照してfalseならそのまま抜けるがtrueなら次へ進む
+      if(unit.parent.vanish){
         unit.actionIndex++;
         // follow===trueなら親の位置に移動する
         if(command.follow){ unit.setPosition(unit.parent.position.x, unit.parent.position.y); }
