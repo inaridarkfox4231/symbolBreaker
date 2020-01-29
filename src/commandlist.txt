@@ -1,0 +1,35 @@
+// コマンド一覧表
+
+speed
+{speed:["set", 4]}  4にする
+{speed:["add", 0.5]} 0.5たす
+{speed:["set", 1, 60]} 60フレームかけて1にする
+{speed:["add", 4, 60]} 60フレームかけて4たす
+
+direction (mirrorは廃止)
+{direction:["set", 90]} 90にする
+{direction:["add", 15]} 15たす
+{direction:["set", 90, 60]} 60フレームかけて90にする
+{direction:["add", 15, 60]} 60フレームかけて15たす
+{direction:["aim", 10]} 10のマージンで自機方向
+{direction:["fromParent", 10]} 親から自分に向かう方向+10ディグリー
+
+shotSpeed
+{shotSpeed:["set", 4]} 4にする
+{shotSpeed:["add", 1]} 1たす
+{shotSpeed:["rel", 1]} 自身のspeed+1にする
+
+shotDirection
+{shotDirection:["set", 90]} 90にする
+{shotDirection:["add", 10]} 10たす
+{shotDirection:["aim", 10]} 10のマージンで自機方向
+{shotDirection:["rel", 10]} 自身のdirection+10
+{shotDirection:["fromParent", 180]} 親から自分に向かう方向+180ディグリー
+
+shotDelay
+{shotDelay:["set", 60]} 60にする
+{shotDelay:["add", 10]} 10たす
+
+shotDistance
+{shotDistance:["set", 40]} 40にする
+{shotDistance:["set", 60]} 60たす

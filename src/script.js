@@ -93,12 +93,12 @@ function setup(){
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "way3burst"]}, {catch:"a"},
-            {catch:"b"}, {radial:{count:2, action:"aim"}}, {wait:8}, {loop:10, back:"b"}, {wait:32},
+            {catch:"b"}, {radial:{count:2, action:[{shotAim:["rel", 0]}, {fire:""}]}},
+            {wait:8}, {loop:10, back:"b"}, {wait:32},
             {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
       way3burst:[{wait:16}, {shotAction:["set", "fade"]},
                  {nway:{count:3, interval:90}}, {vanish:1}],
       fade:[{vanish:60}],
-      aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
 
@@ -124,11 +124,10 @@ function setup(){
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]},
-            {radial:{count:16, action:"aim"}}],
+            {radial:{count:16, action:[{shotAim:["rel", 0]}, {fire:""}]}}],
       flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
               {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120}}, {wait:6}, {loop:4, back:"b"},
               {wait:16}, {loop:INF, back:"a"}],
-      aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
 
@@ -137,10 +136,9 @@ function setup(){
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
     action:{
       main:[{shotAction:["set", "barricade"]}, {shotDistance:["set", 120]},
-            {radial:{count:3, action:"aim"}}],
+            {radial:{count:3, action:[{shotAim:["rel", 0]}, {fire:""}]}}],
       barricade:[{move:"circular", bearing:1}, {bind:true}, {shotSpeed:["set", 10]},
                  {catch:"a"}, {radial:{count:4}}, {wait:1}, {loop:INF, back:"a"}],
-      aim:[{shotAim:["rel", 0]}, {fire:""}]
     }
   })
 
@@ -203,8 +201,7 @@ function setup(){
             {short:"setEnemy", dir:180}, {wait:180}, {loop:INF, back:"a"}],
       enemy1:[{shotShape:"wedgeSmall"}, {shotColor:"black"}, {shotSpeed:["set", 4]},
               {speed:["set", 6]}, {direction:["set", 90]},
-              {speed:["set", 2, 60]}, {nway:{count:3, interval:30, action:"aim"}}],
-      aim:[{aim:5}, {fire:""}]
+              {speed:["set", 2, 60]}, {nway:{count:3, interval:30, action:[{aim:5}, {fire:""}]}}],
     },
     short:{setEnemy:[{shotDirection:["set", "$dir"]}, {catch:"b"}, {shotDistance:["set", [60, 180]]},
                      {fire:""}, {wait:16}, {loop:9, back:"b"}]}

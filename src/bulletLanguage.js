@@ -1791,8 +1791,10 @@ function createNwayArray(seed, data){
   result.push({catch:("nway" + nwayId)});
   if(action === undefined){
     result.push({fire:""});
-  }else{
+  }else if(typeof(action) === "string"){
     result.push(...data[action]);
+  }else{
+    result.push(...action); // 文字列でない、これはそのまま放り込むケース。action:[{}, {}, ...]とかそういうイメージ。
   }
   result.push({shotDirection:["add", interval]});
   result.push({loop:count, back:("nway" + nwayId)});
@@ -1808,8 +1810,10 @@ function createRadialArray(seed, data){
   result.push({catch:("radial" + radialId)});
   if(action === undefined){
     result.push({fire:""});
-  }else{
+  }else if(typeof(action) === "string"){
     result.push(...data[action]);
+  }else{
+    result.push(...action);
   }
   result.push({shotDirection:["add", 360 / count]}); // 負の数で逆回転
   result.push({loop:count, back:("radial" + radialId)});
@@ -1824,8 +1828,10 @@ function createLineArray(seed, data){
   result.push({catch:("line" + lineId)});
   if(action === undefined){
     result.push({fire:""});
-  }else{
+  }else if(typeof(action) === "string"){
     result.push(...data[action]);
+  }else{
+    result.push(...action);
   }
   result.push({shotSpeed:["add", upSpeed]});
   result.push({loop:count, back:("line" + lineId)});
@@ -2087,6 +2093,65 @@ function interpretNestedData(data, dict){
 // ---------------------------------------------------------------------------------------- //
 // Command.
 
+class IdleCommand{
+  constructor(){}
+  execute(unit){ return false; }
+}
+
+class ThroughCommand{
+  constructor(){}
+  execute(unit){
+    unit.actionIndex++;
+    return true;
+  }
+}
+
+// けっこうややこしい
+// stringでもnumberでもその値をセットするだけならそのまま適用できる。
+// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
+class SetCommand{
+  constructor(propName, value, span = -1){
+    if(this.span < 0){
+      this.func = (unit) => {
+        unit[propName] = value;
+        unit.actionIndex++;
+        return true;
+      }
+    }else{ // span > 0のときは時間をかけて変化させる
+      this.func = (unit) => {
+        const cc = unit.counter.getLoopCount();
+        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
+        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
+        return false;
+      }
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// ランダム指定は別に作った方がいい。
+// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
+class RandomSetCommand{
+  constructor(propName, value1, value2){
+    this.func = (unit) => {
+      unit[propName] = value1 + Math.random() * (value2 - value1);
+      unit.actionIndex++;
+      return true;
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
+// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
+// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
+class CustomSetCommand{
+
+}
 
 
 
@@ -2119,9 +2184,6 @@ function execute(unit, command){
       }else{
         unit[_type] += newParameter; // ターンを消費しないで普通に足す
       }
-    }else if(command.mode === "mirror"){
-      // direction限定。角度をθ → 2a-θにする。speedやdelayでは使わないでね。
-      unit.direction = 2 * newParameter - unit[_type];
     }else if(command.mode === "aim"){
       // direction限定。意味は、わかるよね。
       unit.direction = getPlayerDirection(unit.position, newParameter);
