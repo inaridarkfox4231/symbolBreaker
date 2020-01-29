@@ -116,7 +116,7 @@ class System{
 	initialize(){
 		this.player.initialize();
     this.unitArray.loopReverse("flagOff"); // 先に衝突フラグを消す
-    this.unitArray.loopReverse("vanishAction");  // unitすべて戻す
+    this.unitArray.loopReverse("vanish");  // unitすべて戻す
     this.drawGroup = {};
 	}
   registColor(name, _color, damageFactor = 1, lifeFactor = 1){
@@ -277,6 +277,7 @@ class System{
   registUnitColors(){
     // 第3引数：damageFactor, 第4引数：lifeFactor. バランス調整が課題。
     this.registColor("black", color(0), 1, 50)
+        .registColor("white", color(255), 20, 1)
         .registColor("blue", color(63, 72, 204), 1, 1)
         .registColor("dkblue", color(35, 43, 131), 1, 1)
         .registColor("skblue", color(0, 128, 255), 1, 1)
@@ -958,7 +959,7 @@ class DrawSquareShape extends DrawShape{
   set(unit){
     // colliderInitialize.
     unit.collider.update(unit.position.x, unit.position.y, this.size);
-    unit.drawParam = {rotationAngle:0, rotationSpeed:2};
+    unit.drawParam = {rotationAngle:45, rotationSpeed:2};
   }
   draw(unit){
     const {x, y} = unit.position;
@@ -2082,71 +2083,6 @@ function interpretNestedData(data, dict){
       return result;
   }
 }
-
-// ---------------------------------------------------------------------------------------- //
-// Command.
-
-class IdleCommand{
-  constructor(){}
-  execute(unit){ return false; }
-}
-
-class ThroughCommand{
-  constructor(){}
-  execute(unit){
-    unit.actionIndex++;
-    return true;
-  }
-}
-
-// けっこうややこしい
-// stringでもnumberでもその値をセットするだけならそのまま適用できる。
-// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
-class SetCommand{
-  constructor(propName, value, span = -1){
-    if(this.span < 0){
-      this.func = (unit) => {
-        unit[propName] = value;
-        unit.actionIndex++;
-        return true;
-      }
-    }else{ // span > 0のときは時間をかけて変化させる
-      this.func = (unit) => {
-        const cc = unit.counter.getLoopCount();
-        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
-        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
-        return false;
-      }
-    }
-  }
-  execute(unit){
-    this.func(unit);
-  }
-}
-
-// ランダム指定は別に作った方がいい。
-// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
-class RandomSetCommand{
-  constructor(propName, value1, value2){
-    this.func = (unit) => {
-      unit[propName] = value1 + Math.random() * (value2 - value1);
-      unit.actionIndex++;
-      return true;
-    }
-  }
-  execute(unit){
-    this.func(unit);
-  }
-}
-
-// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
-// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
-// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
-class CustomSetCommand{
-
-}
-
-
 
 // ---------------------------------------------------------------------------------------- //
 // execute.

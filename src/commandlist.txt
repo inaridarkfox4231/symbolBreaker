@@ -59,12 +59,15 @@ move, shotMove
 fire
 {fire:""} もうこんだけね・・
 たとえばだけど、{fire:true, count:5, interval:20}で20フレーム間隔で5発まで撃つとか、
+(5発撃ったら自動的にfireをoffにする)
 {fire:true, count:INF, interval:4}で4フレーム間隔で無限に撃ち続けるとか、{fire:false}でやめるとか
 できたら面白そうね。1発だけ撃つ場合は{fire:true, count:1}みたいな。単に{fire:true}なら・・
 {fire:true, count:5}ならintervalのデフォが1になる。で、5発撃つとおわり。
 {fire:true}ならcount,intervalのデフォが1,0になる。従来のfireはこれ。
 どうしよ・・迷うね・・・これだったらたとえばshotDistanceを徐々に変化っていうのも組み合わせれば記述が簡潔に・・？
 撃つタイミングはactionのあと。だから、命令すればそのターンで発射できる。
+
+だめだ。これだと一斉に発射できない。却下。（えー）
 
 shotAction
 {shotAction:["set", "name"]} name:[]をぶちこむ
@@ -73,3 +76,8 @@ vanish
 {vanish:true}で消えてくれる
 フラグ系もセットでなんとかなるんだけどね。名前から直接操作したいからね。
 vanishFlag→vanishに改名。
+
+最終的には、s_"name":"value" ってあったらそのままnameをvalueにする、にしたい。し、
+a_"name":"value" ってあったらそのままnameにvalueを足す、であってほしいよね。例外はあれど。
+
+それ許しちゃうとactionとshapeとcolorがいっせいに反撃してくるから例外は認めるけどね。

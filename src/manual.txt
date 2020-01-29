@@ -397,3 +397,68 @@ actionのところは今まで通り下に配列で[{}{}]みたいにすると�
 
 backの値書き換えちゃうのまずいね。
 backあるやつは代わりにassignで。。
+
+// 案
+// ---------------------------------------------------------------------------------------- //
+// Command.
+// 要らない気がしてきた・・や、要るんだけど・・んー。
+
+class IdleCommand{
+  constructor(){}
+  execute(unit){ return false; }
+}
+
+class ThroughCommand{
+  constructor(){}
+  execute(unit){
+    unit.actionIndex++;
+    return true;
+  }
+}
+
+// けっこうややこしい
+// stringでもnumberでもその値をセットするだけならそのまま適用できる。
+// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
+class SetCommand{
+  constructor(propName, value, span = -1){
+    if(this.span < 0){
+      this.func = (unit) => {
+        unit[propName] = value;
+        unit.actionIndex++;
+        return true;
+      }
+    }else{ // span > 0のときは時間をかけて変化させる
+      this.func = (unit) => {
+        const cc = unit.counter.getLoopCount();
+        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
+        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
+        return false;
+      }
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// ランダム指定は別に作った方がいい。
+// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
+class RandomSetCommand{
+  constructor(propName, value1, value2){
+    this.func = (unit) => {
+      unit[propName] = value1 + Math.random() * (value2 - value1);
+      unit.actionIndex++;
+      return true;
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
+// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
+// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
+class CustomSetCommand{
+
+}

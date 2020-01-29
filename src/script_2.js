@@ -25,7 +25,7 @@ function preload(){
 }
 
 function setup(){
-  mySystem = createSystem(480, 600, 1024);
+  mySystem = createSystem(window.innerWidth, window.innerHeight, 1024);
   // AREA_WIDTH = 480, AREA_HEIGHT = 600が代入される。
   // さらにunitPoolも生成する（1024）
   // unitPoolはあっちでしか使ってないのでこれでいいはず・・・
@@ -41,43 +41,57 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{fire:"set4"}, {wait:4}, {loop:INF, back:2}]
-    },
-    fireDef:{set4:{formation:{type:"frontVertical", count:4, distance:15, interval:15}}}
-  };
-  // レーザー撃ってみよう。60フレーム経たないと再発射できない。
-
-  weaponData[weaponCapacity++] = {
-    shotSpeed:0.1, color:"dkskblue",
-    action:{
-      main:[{shotAction:["set", "laserUnit"]}, {fire:""}, {wait:60}, {loop:INF, back:2}],
-      laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
-                 {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
-                 {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:1}],
-      calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
+      main:[{catch:"a"}, {fire:""}, {wait:4}, {loop:INF, back:"a"}]
     }
   };
-
 
   // ここで第二引数は通常PLAYERになってるんだけど、OFFにすることでプレイヤーが無敵になる。そういうオプション。
   // mySystem.createPlayer(weaponData, OFF);
   // target云々があるので・・まあでもディスプレイ用なら要らないか。
   mySystem.createPlayer(weaponData);
 
-  // レーザー1
   mySystem.addPatternSeed({
-    x:0.2, y:0.1, collisionFlag:ENEMY, shotSpeed:4, speed:4.8,
-    color:"bossBlue", shape:"squareLarge", shotShape:"wedgeMiddle", shotColor:"dkblue",
-    action:{
-      main:[{shotAction:["set", "laserUnit"]}, {aim:0}, {fire:"way", count:3}, {wait:36},
-            {shotAction:["clear"]}, {aim:0}, {fire:"way", count:9}, {wait:8}, {loop:3, back:3},
-            {direction:["mirror", 90]}, {loop:INF, back:-1}],
-      laserUnit:[{hide:true}, {shotSpeed:["set", 12]}, {shotDirection:["rel", 0]},
-                 {shotShape:"laserSmall"}, {shotColor:"bossBlue"}, {shotAction:["set", "calm"]},
-                 {fire:""}, {signal:"frameOut"}, {vanish:1}],
-      calm:[{bind:true}, {speed:["set", 4, 60]}, {signal:"frameOut"}, {speed:["set", 0.1]}]
-    },
-    fireDef:{way:{nway:{count:"$count", interval:20}}}
+      x:(0.5 - (600 / AREA_WIDTH)), y:0.2, shotDirection:90, speed:1, bgColor:"black",
+      action:{
+          main:[{hide:true}, {shotCollisionFlag:ENEMY},
+                {shotShape:"squareMiddle"}, {shotAction:["set", "stop"]},
+                {shotColor:"red"},
+                {short:"all"}, {short:"set2", sp1:2, sp2:6}, {short:"set3", sp1:2, sp2:4, sp3:6}, {wait:40},
+                {shotColor:"orange"},
+                {short:"set3", sp1:4, sp2:6, sp3:8}, {short:"set2", sp1:2, sp2:10},
+                {short:"set2", sp1:4, sp2:8}, {wait:40},
+                {shotColor:"yellow"},
+                {short:"all"}, {short:"set2", sp1:2, sp2:10}, {short:"set3", sp1:4, sp2:6, sp3:8}, {wait:40},
+                {wait:160},
+                {shotColor:"ltgreen"},
+                {short:"set4", sp1:2, sp2:6, sp3:8, sp4:10}, {short:"set3", sp1:2, sp2:6, sp3:10},
+                {short:"set4", sp1:2, sp2:4, sp3:6, sp4:10}, {wait:40},
+                {shotColor:"blue"},
+                {short:"all"}, {short:"set2", sp1:2, sp2:10}, {short:"all"}, {wait:40},
+                {shotColor:"dkblue"},
+                {short:"set4", sp1:2, sp2:6, sp3:8, sp4:10}, {short:"set3", sp1:2, sp2:6, sp3:10},
+                {short:"set4", sp1:2, sp2:4, sp3:6, sp4:10}, {wait:40},
+                {shotColor:"purple"},
+                {short:"all"}, {short:"set2", sp1:2, sp2:10}, {short:"all"}, {wait:80},
+                {shotColor:"black"}, {shotAction:["set", "eliminate"]},
+                {shotSpeed:["set", 0]}, {shotCollisionFlag:PLAYER}, {fire:""}, {vanish:true}
+          ],
+          stop:[{speed:["set", 0, 40]}],
+          eliminate:[{shotCollisionFlag:PLAYER_BULLET}, {shotDirection:["set", 90]}, {shotSpeed:["set", 8]},
+                     {shotShape:"laserLarge"}, {shotColor:"grey"}, {shotAction:["set", "laserHead"]},
+                     {fire:""}, {wait:30}, {short:"leftFadeOut"}],
+          laserHead:[{wait:30}, {short:"leftFadeOut"}]
+      },
+      short:{
+          all:[{shotSpeed:["set", 0]},
+               {catch:"a"}, {shotSpeed:["add", 2]}, {fire:""}, {loop:5, back:"a"}, {wait:40}],
+          set2:[{shotSpeed:["set", "$sp1"]}, {fire:""}, {shotSpeed:["set", "$sp2"]}, {fire:""}, {wait:40}],
+          set3:[{shotSpeed:["set", "$sp1"]}, {fire:""}, {shotSpeed:["set", "$sp2"]}, {fire:""},
+                {shotSpeed:["set", "$sp3"]}, {fire:""}, {wait:40}],
+          set4:[{shotSpeed:["set", "$sp1"]}, {fire:""}, {shotSpeed:["set", "$sp2"]}, {fire:""},
+                {shotSpeed:["set", "$sp3"]}, {fire:""}, {shotSpeed:["set", "$sp4"]}, {fire:""}, {wait:40}],
+          leftFadeOut:[{speed:["set", 4]}, {direction:["set", 180]}]
+      }
   })
 
   mySystem.setPattern(0);
