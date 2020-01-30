@@ -32,8 +32,6 @@ function setup(){
   createCanvas(AREA_WIDTH, AREA_HEIGHT);
   angleMode(DEGREES);
 
-  //unitPool = new ObjectPool(() => { return new Unit(); }, 1024);
-
   let weaponData = [];
   let weaponCapacity = 0;
 
