@@ -1,5 +1,11 @@
 // コマンド一覧表
 
+はじめに_で区切ってsetやaddならそっちへ。
+relやfromParentやaimだったらそのように。
+今気付いたけど文字列をそのままセットするコマンドが皆無・・だから
+setで始まって文字列ならcolor, shape, action, moveにとばしちゃおうね。定数(ENEMYとか)はnumber, というか中身次第。
+set_collisionFlag:ENEMY で若干長くなるけどまあいいや・・
+
 speed
 {speed:["set", 4]}  4にする
 {speed:["add", 0.5]} 0.5たす
@@ -70,7 +76,7 @@ fire
 だめだ。これだと一斉に発射できない。却下。（えー）
 
 shotAction
-{shotAction:["set", "name"]} name:[]をぶちこむ
+{shotAction:["set", "name"]} dataから引っ張ってきてdata[name]を。
 
 vanish
 {vanish:true}で消えてくれる

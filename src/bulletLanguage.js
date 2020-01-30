@@ -1638,6 +1638,22 @@ class CircularMove{
   }
 }
 
+// えーと、fall.
+class FallMove{
+  constructor(param){
+    this.gravity = param.gravity;
+  }
+  execute(unit){
+    const {x, y} = unit.position;
+    unit.velocity.y += this.gravity;
+    unit.position.add(unit.velocity);
+    unit.direction = atan2(unit.velocity.y, unit.velocity.x);
+    return;
+  }
+}
+
+// えーと、指定位置に移動・・割合指定だったり。0.5で真ん中とか？
+
 // ---------------------------------------------------------------------------------------- //
 // createFirePattern.
 

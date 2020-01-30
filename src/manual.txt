@@ -462,3 +462,38 @@ class RandomSetCommand{
 class CustomSetCommand{
 
 }
+
+catchはTHROUGHでOK.
+fireもひとつだけでいいんね。
+だから、IDLE_COMMANDとFIRE_COMMANDとTHROUGH_COMMANDが定数化出来る流れ。
+
+class FireCommand{
+  constructor(){
+  }
+  execute(unit){ executeFire(unit); unit.actionIndex++; return true; }
+}
+
+// boolean用
+class FlagSetCommand(){
+  constructor(propName, flag){
+    this.func = (unit) => { unit[propName] = flag; unit.actionIndex++; return true; }
+  }
+  execute(unit){ this.func(unit); }
+}
+???どっちがいいんだろ。
+まあ、パラメタによって・・
+
+actionやcolor, shapeなど、stringをそのまま使わないケースに関しては、_を付けて区別するとか。
+s_action:"_shotFire"みたいな？？なる。で、_で始まらなければそのままセットするのね。
+
+今までいちいちfireFunction作ってたけどもうひつような・・てかもう使ってないじゃん？あ、違うか。
+そうだよ。毎回作ってたんだよ・・
+
+// color, shape用
+class SetStyleCommand{
+  constructor(propName, key){}
+  execute(){}
+}
+
+// action用・・これは渡すときにdata使って配列にしちゃおうね。
+// move用・・これはクラス作って渡す感じだからパラメータ渡しちゃってこっちでやる。多くなったら煩雑になる。
