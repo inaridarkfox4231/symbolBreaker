@@ -36,6 +36,9 @@ function createSystem(w, h, unitCapacity){
   window["BLUE"] = entity.drawColor["blue"];
   // オブジェクトプール
   window["unitPool"] = new ObjectPool(() => { return new Unit(); }, unitCapacity);
+  // デフォルトクラス
+  window["IDLE_COMMAND"] = new IdleCommand();
+  window["THROUGH_COMMAND"] = new ThroughCommand();
   return _system;
 }
 
@@ -116,7 +119,7 @@ class System{
 	initialize(){
 		this.player.initialize();
     this.unitArray.loopReverse("flagOff"); // 先に衝突フラグを消す
-    this.unitArray.loopReverse("vanish");  // unitすべて戻す
+    this.unitArray.loopReverse("vanishAction");  // unitすべて戻す
     this.drawGroup = {};
 	}
   registColor(name, _color, damageFactor = 1, lifeFactor = 1){
@@ -1949,6 +1952,124 @@ function createAction(data, targetAction){
 // 1.セット系
 // speed, shotSpeed, direction, shotDirectionについては"set"と"add"... {speed:["set", [3, 7]]}
 // {fire:"radial16way7"}とかね。
+// 今interpretに書いてある内容を、クラスを渡す形式に書き換える。そんで、今executeって書いてあるところはなくして、
+// クラス内のexecuteを実行させるように書き換える（とりあえず過渡として一旦executeは残してそれから無くす流れ。）
+
+// ---------------------------------------------------------------------------------------- //
+// Command.
+// 要らない気がしてきた・・や、要るんだけど・・んー。
+
+class IdleCommand{
+  constructor(){}
+  execute(unit){ return false; }
+}
+
+class ThroughCommand{
+  constructor(){}
+  execute(unit){
+    unit.actionIndex++;
+    return true;
+  }
+}
+
+// けっこうややこしい
+// stringでもnumberでもその値をセットするだけならそのまま適用できる。
+// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
+class SetCommand{
+  constructor(propName, value, span = -1){
+    if(this.span < 0){
+      this.func = (unit) => {
+        unit[propName] = value;
+        unit.actionIndex++;
+        return true;
+      }
+    }else{ // span > 0のときは時間をかけて変化させる
+      this.func = (unit) => {
+        const cc = unit.counter.getLoopCount();
+        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
+        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
+        return false;
+      }
+    }
+  }
+  execute(unit){
+    return this.func(unit); // trueのときとfalseのときがあるので。
+  }
+}
+
+// ランダム指定は別に作った方がいい。
+// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
+class RandomSetCommand{
+  constructor(propName, value1, value2){
+    this.func = (unit) => {
+      unit[propName] = value1 + Math.random() * (value2 - value1);
+    }
+  }
+  execute(unit){
+    this.func(unit);
+    unit.actionIndex++;
+    return true;
+  }
+}
+
+// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
+// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
+// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
+class CustomSetCommand{
+  constructor(propName, param){
+    switch(propName){
+      case "direction":
+        switch(param.type){
+          case "aim":
+            this.func = (unit) => { unit.direction = getPlayerDirection(unit.position, param.margin); }
+            break;
+          case "fromParent":
+            this.func = (unit) => {
+              const {px, py} = unit.parent.position;
+              const {x, y} = unit.position;
+              unit.direction = atan2(y - py, x - px) + param.diff;
+            }
+            break;
+        }
+        break;
+      case "shotDirection":
+        switch(param.type){
+          case "aim":
+            this.func = (unit) => { unit.shotDirection = getPlayerDirection(unit.position, param.margin); }
+            break;
+          case "rel":
+            this.func = (unit) => { unit.shotDirection = unit.direction + param.diff; }
+            break;
+          case "fromParent":
+            this.func = (unit) => {
+              const {px, py} = unit.parent.position;
+              const {x, y} = unit.position;
+              unit.shotDirection = atan2(y - py, x - px) + param.diff;
+            }
+            break;
+        }
+        break;
+    }
+  }
+  execute(unit){ this.func(unit); unit.actionIndex++; return true; }
+}
+
+
+class FireCommand{
+  constructor(){
+  }
+  execute(unit){ executeFire(unit); unit.actionIndex++; return true; }
+}
+
+// boolean用
+class FlagSetCommand{
+  constructor(propName, flag){
+    this.func = (unit) => { unit[propName] = flag; unit.actionIndex++; return true; }
+  }
+  execute(unit){ this.func(unit); }
+}
+
+// ---------------------------------------- //
 
 // これがreturnするのがクラスになればいいのね。
 // ここでreturnされるのがクラスになって、executeのところについては、
