@@ -190,6 +190,7 @@ function setup(){
             {catch:"b"}, {nway:{count:13, interval:8}}, {wait:4}, {loop:20, back:"b"}, {vanish:true}]
     }
   })
+  // なんとなく読めた。分かりやすいなこれ（自画自賛）
 
   // ランダムに9匹？
   mySystem.addPatternSeed({
@@ -244,6 +245,9 @@ function setup(){
                    {shotSpeed:["set", 4]}, {direction:["set", 90]}, {speed:["set", 1, 60]}, {aim:5}]
     }
   })
+
+// 久しぶり過ぎていろいろ忘れてるのでなんか書きたいよね・・
+// ていうかいったんまとめたい（行数長くていいから）
 
 /*
 
@@ -1024,7 +1028,7 @@ function drawConfig(){
       fill((i % 4) * 50);
       rect(x, y, 40, 40);
     }else{
-      fill(255, 0, 0, 140 + sin(frameCount * 6) * 80);
+      fill(255, 0, 0, 140 + sin(frameCount * 6) * 80); // 透明度を変化させて選択状態を可視化
       rect(x, y, 40, 40);
     }
   }
