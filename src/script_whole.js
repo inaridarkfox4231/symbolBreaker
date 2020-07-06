@@ -103,7 +103,7 @@ function setup(){
   // デフォルト。黒い弾丸をいっぱい。
   weaponData[weaponCapacity++] = {
     action:{
-      main:[{shotAction:["set", "go"]}, {catch:"a"}, {nway:{count:4, interval:25}},
+      main:[{shotAction:"go"}, {catch:"a"}, {nway:{count:4, interval:25}},
             {wait:4}, {loop:INF, back:"a"}],
       go:[{wait:5}, {direction:["set", -90]}]
     }
@@ -113,9 +113,9 @@ function setup(){
   weaponData[weaponCapacity++] = {
     shotSpeed:0.1, color:"dkskblue",
     action:{
-      main:[{shotAction:["set", "laserUnit"]}, {catch:"a"}, {fire:""}, {wait:60}, {loop:INF, back:"a"}],
+      main:[{shotAction:"laserUnit"}, {catch:"a"}, {fire:""}, {wait:60}, {loop:INF, back:"a"}],
       laserUnit:[{hide:true}, {shotShape:"laserSmall"}, {shotColor:"dkskblue"},
-                 {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:["set", "calm"]},
+                 {shotSpeed:["set", 24]}, {shotDirection:["set", -90]}, {shotAction:"calm"},
                  {fire:""}, {wait:30}, {speed:["set", 12]}, {signal:"frameOut"}, {vanish:true}],
       calm:[{bind:true}, {signal:"frameOut"}, {speed:["set", 0.1]}]
     }
@@ -140,11 +140,11 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:2, shotDirection:90, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "way3burst"]}, {catch:"a"},
+      main:[{shotAction:"way3burst"}, {catch:"a"},
             {catch:"b"}, {radial:{count:2, action:[{shotAim:["rel", 0]}, {fire:""}]}},
             {wait:8}, {loop:10, back:"b"}, {wait:32},
             {shotDirection:["add", 45]}, {loop:INF, back:"a"}],
-      way3burst:[{wait:16}, {shotAction:["set", "fade"]},
+      way3burst:[{wait:16}, {shotAction:"fade"},
                  {nway:{count:3, interval:90}}, {vanish:true}],
       fade:[{wait:60}, {vanish:true}],
     }
@@ -155,7 +155,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "sweeping"]}, {radial:{count:2}}],
+      main:[{shotAction:"sweeping"}, {radial:{count:2}}],
       sweeping:[{speed:["set", 0.001, 30]}, {move:"circular", bearing:-3},
                 {bind:true}, {shotDirection:["rel", 0]},
                 {shotSpeed:["set", 2]},
@@ -171,7 +171,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "flower"]}, {shotDistance:["set", 120]},
+      main:[{shotAction:"flower"}, {shotDistance:["set", 120]},
             {radial:{count:16, action:[{shotAim:["rel", 0]}, {fire:""}]}}],
       flower:[{move:"circular", bearing:0.5}, {bind:true}, {shotSpeed:["set", 2]},
               {catch:"a"}, {catch:"b"}, {nway:{count:2, interval:120}}, {wait:6}, {loop:4, back:"b"},
@@ -183,7 +183,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotDirection:45, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "barricade"]}, {shotDistance:["set", 120]},
+      main:[{shotAction:"barricade"}, {shotDistance:["set", 120]},
             {radial:{count:3, action:[{shotAim:["rel", 0]}, {fire:""}]}}],
       barricade:[{move:"circular", bearing:1}, {bind:true}, {shotSpeed:["set", 10]},
                  {catch:"a"}, {radial:{count:4}}, {wait:1}, {loop:INF, back:"a"}],
@@ -199,8 +199,8 @@ function setup(){
     x:0.5, y:0.3, shotDirection:90, collisionFlag:ENEMY,
     action:{
       main:[{catch:"a"}, {shotDistance:["set", 50]},
-            {shotAction:["set", "scatter"]}, {radial:{count:2}}, {wait:120},
-            {shotAction:["set", "scatterInv"]}, {radial:{count:2}}, {wait:120},
+            {shotAction:"scatter"}, {radial:{count:2}}, {wait:120},
+            {shotAction:"scatterInv"}, {radial:{count:2}}, {wait:120},
             {loop:INF, back:"a"}],
       scatter:[{short:"scatter", bearing:1.5, dirDiff:15}],
       scatterInv:[{short:"scatter", bearing:-1.5, dirDiff:-15}],
@@ -208,7 +208,7 @@ function setup(){
     },
     short:{
       scatter:[{move:"circular", bearing:"$bearing", radiusDiff:1}, {bind:true},
-               {wait:30}, {shotAction:["set","trap"]}, {shotSpeed:["set", 0.0001]}, {catch:"b"},
+               {wait:30}, {shotAction:"trap"}, {shotSpeed:["set", 0.0001]}, {catch:"b"},
                {shotDirection:["fromParent", "$dirDiff"]}, {fire:""}, {wait:4}, {loop:INF, back:"b"}]
     }
   })
@@ -229,7 +229,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.2, collisionFlag:ENEMY,
     action:{
-      main:[{shotAction:["set", "fire"]},
+      main:[{shotAction:"fire"},
             {shotSpeed:["set", 0]}, {catch:"a"}, {fire:""}, {wait:120},
             {shotDirection:["set", 0]}, {shotDistance:["set", 120]},
             {radial:{count:2}}, {shotDistance:["set", 0]}, {wait:120},
@@ -245,7 +245,7 @@ function setup(){
     x:0.5, y:-0.1,
     action:{
       main:[{hide:true}, {shotColor:"grey"}, {shotShape:"squareMiddle"}, {shotCollisionFlag:ENEMY},
-            {shotAction:["set", "enemy1"]}, {catch:"a"},
+            {shotAction:"enemy1"}, {catch:"a"},
             {short:"setEnemy", dir:0}, {wait:180},
             {short:"setEnemy", dir:180}, {wait:180}, {loop:INF, back:"a"}],
       enemy1:[{shotShape:"wedgeSmall"}, {shotColor:"black"}, {shotSpeed:["set", 4]},
@@ -275,8 +275,8 @@ function setup(){
     x:0, y:-0.2, bgColor:"plorange", shotSpeed:8,
     action:{
       main:[{hide:true}, {shotShape:"squareMiddle"}, {shotColor:"orange"}, {shotCollisionFlag:ENEMY},
-            {shotAction:["set", "attack1"]}, {short:"createEnemy"}, {wait:240},
-            {shotAction:["set", "attack2"]}, {short:"createEnemy"}, {vanish:true}],
+            {shotAction:"attack1"}, {short:"createEnemy"}, {wait:240},
+            {shotAction:"attack2"}, {short:"createEnemy"}, {vanish:true}],
       attack1:[{short:"preparation"}, {catch:"c"},
                {nway:{count:3, interval:45}},
                {wait:60}, {loop:3, back:"c"}, {speed:["set", 8, 30]}],
@@ -301,7 +301,7 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.2, shotSpeed:5, shotDirection:90,
     action:{
-      main:[{shotAction:["set", "burst"]}, {fire:""}],
+      main:[{shotAction:"burst"}, {fire:""}],
       burst:[{wait:30}, {nway:{count:5, interval:72, action:"way5"}}, {vanish:true}],
       way5:[{nway:{count:5, interval:10}}]
     }
@@ -311,9 +311,9 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
     action:{
-      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {radial:{count:5}}, {wait:300}, {loop:INF, back:"a"}],
-      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {radial:{count:4}}, {vanish:true}],
-      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {radial:{count:3}}, {vanish:true}],
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way4"}, {radial:{count:5}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:"way3"}, {radial:{count:4}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way2"}, {radial:{count:3}}, {vanish:true}],
       way2:[{short:"preparation"}, {radial:{count:2}}, {vanish:true}]
     },
     short:{
@@ -326,9 +326,9 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
     action:{
-      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {nway:{count:5, interval:72}}, {wait:300}, {loop:INF, back:"a"}],
-      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {nway:{count:4, interval:90}}, {vanish:true}],
-      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {nway:{count:3, interval:120}}, {vanish:true}],
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way4"}, {nway:{count:5, interval:72}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:"way3"}, {nway:{count:4, interval:90}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way2"}, {nway:{count:3, interval:120}}, {vanish:true}],
       way2:[{short:"preparation"}, {nway:{count:2, interval:180}}, {vanish:true}]
     },
     short:{
@@ -341,9 +341,9 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
     action:{
-      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {radial:{count:2}}, {wait:300}, {loop:INF, back:"a"}],
-      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {radial:{count:3}}, {vanish:true}],
-      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {radial:{count:5}}, {vanish:true}],
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way4"}, {radial:{count:2}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:"way3"}, {radial:{count:3}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way2"}, {radial:{count:5}}, {vanish:true}],
       way2:[{short:"preparation"}, {radial:{count:7}}, {vanish:true}]
     },
     short:{
@@ -356,9 +356,9 @@ function setup(){
   mySystem.addPatternSeed({
     x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
     action:{
-      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {nway:{count:2, interval:180}}, {wait:300}, {loop:INF, back:"a"}],
-      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {nway:{count:3, interval:120}}, {vanish:true}],
-      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {nway:{count:5, interval:72}}, {vanish:true}],
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way4"}, {nway:{count:2, interval:180}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:"way3"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way2"}, {nway:{count:5, interval:72}}, {vanish:true}],
       way2:[{short:"preparation"}, {nway:{count:7, interval:51.4}}, {vanish:true}]
     },
     short:{
@@ -3139,6 +3139,7 @@ function interpretCommand(data, command, index){
     return result;
   }
   // shotAction. 発射する弾丸の挙動を指定する。
+  /*
   if(_type === "shotAction"){
     result.mode = command[_type][0];
     if(result.mode === "set"){
@@ -3146,12 +3147,11 @@ function interpretCommand(data, command, index){
     }
     return result;
   }
-  /*
+  */
   if(_type === "shotAction"){
     result.shotAction = data.action[command.shotAction];
     return result;
   }
-  */
   // あとはwait, loop, aim, vanish, triggerなど。triggerは未準備なのでまた今度でいい。手前の3つやってね。
   // backとかjumpとかswitchも面白そう。
   // そのあとexecute作ったらデバッグに移る。
@@ -3339,6 +3339,7 @@ function execute(unit, command){
   }
   // shotにactionをセットする場合
   // clearを廃止したい
+  /*
   if(_type === "shotAction"){
     if(command.mode === "set"){
       unit.shotAction = command.shotAction;
@@ -3348,12 +3349,12 @@ function execute(unit, command){
     unit.actionIndex++;
     return true;
   }
-/*
+  */
   if(_type === "shotAction"){
     unit.shotAction = command.shotAction;
+    unit.actionIndex++;
     return true;
   }
-*/
   if(_type === "wait"){
     // loopCounterを1増やす。countと一致した場合だけloopCounterとcurrentのインデックスを同時に増やす。
     // loopCheckは該当するカウントを1増やしてlimitに達したらtrueを返すもの。
