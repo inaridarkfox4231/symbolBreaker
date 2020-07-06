@@ -418,19 +418,22 @@ function setup(){
     }
   })
 
-  // 本題
-  // 2, 3, 5のところを素因数列にする。1の場合は直進して消えて終わり。
   mySystem.addPatternSeed({
     x:0.5, y:0.4, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"black", bgColor:"plblue",
     action:{
-      main:[{short:"deco"}, {catch:"a"}, {shotAction:"rad1"}, {fire:""}, {wait:300}, {loop:INF, back:"a"}],
-      rad1:[{short:"preparation", diff:90}, {shotAction:"rad2"}, {radial:{count:2}}, {vanish:true}],
-      rad2:[{short:"preparation", diff:60}, {shotAction:"rad3"}, {radial:{count:3}}, {vanish:true}],
-      rad3:[{short:"preparation", diff:36}, {radial:{count:5}}, {vanish:true}]
+      main:[{deco:{shape:"rectLarge", color:"dkblue"}}, {catch:"a"}, {shotAction:"rad8"}, {fire:""}, {wait:600}, {loop:INF, back:"a"}],
+      rad8:[{deco:{shape:"rectLarge", color:"dkblue"}}, {short:"preparation"}, {shotAction:"rad0"}, {radial:{count:2}}, {vanish:true}],
+      rad0:[{deco:{shape:"rectLarge", color:"dkblue"}}, {short:"preparation"}, {shotAction:"rad1"}, {radial:{count:2}}, {vanish:true}],
+      rad1:[{deco:{shape:"rectLarge", color:"blue"}}, {short:"preparation"}, {shotAction:"rad2"}, {radial:{count:2}}, {vanish:true}],
+      rad2:[{deco:{shape:"rectMiddle", color:"blue"}}, {short:"preparation"}, {shotAction:"rad3"}, {radial:{count:3}}, {vanish:true}],
+      rad3:[{deco:{shape:"rectMiddle", color:"blue"}}, {short:"preparation"}, {shotAction:"rad4"}, {radial:{count:2}}, {vanish:true}],
+      rad4:[{deco:{shape:"rectMiddle", color:"blue"}}, {short:"preparation"}, {shotAction:"rad5"}, {radial:{count:2}}, {vanish:true}],
+      rad5:[{deco:{shape:"rectSmall", color:"blue"}}, {short:"preparation"}, {shotAction:"rad6"}, {radial:{count:2}}, {vanish:true}],
+      rad6:[{deco:{shape:"rectSmall", color:"blue"}}, {short:"preparation"}, {shotAction:"rad7"}, {radial:{count:5}}, {vanish:true}],
+      rad7:[]
     },
     short:{
-      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", "$diff"]}],
-      deco:[{deco:{shape:"circleSmall", color:"black"}}]
+      preparation:[{speed:["set", 0.1, 30]}, {shotDirection:["rel", 60]}]
     }
   })
 
@@ -1546,10 +1549,6 @@ class System{
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
         .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
-        .registShape("circleSmall", new DrawCircleShape(25))
-        .registShape("circleMiddle", new DrawCircleShape(35))
-        .registShape("circleLarge", new DrawCircleShape(45))
-        .registShape("circleHuge", new DrawCircleShape(80))
         .registShape("laserSmall", new DrawLaserShape(8))
         .registShape("laserMiddle", new DrawLaserShape(16))
         .registShape("laserLarge", new DrawLaserShape(24))
@@ -2277,24 +2276,6 @@ class DrawCherryShape extends DrawShape{
           this.size, this.size, 45 + 72 * i + direction, 315 + 72 * i + direction);
     }
     unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
-  }
-}
-
-// 単純に円を描画するのがあってもいいよね。
-// 弾丸用。
-class DrawCircleShape extends DrawShape{
-  constructor(size){
-    super();
-    this.colliderType = "circle";
-    this.size = size; // 25, 35, 45, 80. 中に数字を書き込む関係で。textSize:20を想定。
-    this.damage = size * 0.2;
-  }
-  set(unit){
-    unit.collider.update(unit.position.x, unit.position.y, this.size);
-  }
-  draw(unit){
-    const {x, y} = unit.position;
-    circle(x, y, this.size);
   }
 }
 
