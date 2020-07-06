@@ -3138,8 +3138,7 @@ function interpretCommand(data, command, index){
     // fireするだけ
     return result;
   }
-  // action.
-  // {action:["set", エイリアス]} "set" or "clear".
+  // shotAction. 発射する弾丸の挙動を指定する。
   if(_type === "shotAction"){
     result.mode = command[_type][0];
     if(result.mode === "set"){
@@ -3147,6 +3146,12 @@ function interpretCommand(data, command, index){
     }
     return result;
   }
+  /*
+  if(_type === "shotAction"){
+    result.shotAction = data.action[command.shotAction];
+    return result;
+  }
+  */
   // あとはwait, loop, aim, vanish, triggerなど。triggerは未準備なのでまた今度でいい。手前の3つやってね。
   // backとかjumpとかswitchも面白そう。
   // そのあとexecute作ったらデバッグに移る。
@@ -3333,6 +3338,7 @@ function execute(unit, command){
     return true; // 発射したら次へ！
   }
   // shotにactionをセットする場合
+  // clearを廃止したい
   if(_type === "shotAction"){
     if(command.mode === "set"){
       unit.shotAction = command.shotAction;
@@ -3342,6 +3348,12 @@ function execute(unit, command){
     unit.actionIndex++;
     return true;
   }
+/*
+  if(_type === "shotAction"){
+    unit.shotAction = command.shotAction;
+    return true;
+  }
+*/
   if(_type === "wait"){
     // loopCounterを1増やす。countと一致した場合だけloopCounterとcurrentのインデックスを同時に増やす。
     // loopCheckは該当するカウントを1増やしてlimitに達したらtrueを返すもの。
