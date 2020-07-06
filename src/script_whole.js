@@ -317,8 +317,8 @@ function setup(){
       way2:[{short:"preparation"}, {radial:{count:2}}, {vanish:true}]
     },
     short:{
-      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
-      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"black"}}]
     }
   })
 
@@ -332,8 +332,8 @@ function setup(){
       way2:[{short:"preparation"}, {nway:{count:2, interval:180}}, {vanish:true}]
     },
     short:{
-      preparation:[{short:"deco"}, {speed:["set", 1, 30]}, {shotDirection:["rel", 0]}],
-      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+      preparation:[{short:"deco"}, {speed:["set", 1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"black"}}]
     }
   })
 
@@ -347,8 +347,8 @@ function setup(){
       way2:[{short:"preparation"}, {radial:{count:7}}, {vanish:true}]
     },
     short:{
-      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
-      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"black"}}]
     }
   })
 
@@ -362,8 +362,75 @@ function setup(){
       way2:[{short:"preparation"}, {nway:{count:7, interval:51.4}}, {vanish:true}]
     },
     short:{
-      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
-      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"black"}}]
+    }
+  })
+
+  // 5, 3, 3, 2, 2, 2. (nway)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkred", bgColor:"plred",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way1"}, {nway:{count:5, interval:72}}, {wait:300}, {loop:INF, back:"a"}],
+      way1:[{short:"preparation"}, {shotAction:"way2"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way2:[{short:"preparation"}, {shotAction:"way3"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way4"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way4:[{short:"preparation"}, {shotAction:"way5"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way5:[{short:"preparation"}, {nway:{count:2, interval:180}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"red"}}]
+    }
+  })
+
+  // 2, 2, 2, 3, 3, 5. (nway)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkgreen", bgColor:"plgreen",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way1"}, {nway:{count:2, interval:180}}, {wait:300}, {loop:INF, back:"a"}],
+      way1:[{short:"preparation"}, {shotAction:"way2"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way2:[{short:"preparation"}, {shotAction:"way3"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way4"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way4:[{short:"preparation"}, {shotAction:"way5"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way5:[{short:"preparation"}, {nway:{count:5, interval:72}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"green"}}]
+    }
+  })
+
+  // 2, 3, 2, 5, 2, 3. (nway)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue", bgColor:"plblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:"way1"}, {nway:{count:2, interval:180}}, {wait:300}, {loop:INF, back:"a"}],
+      way1:[{short:"preparation"}, {shotAction:"way2"}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way2:[{short:"preparation"}, {shotAction:"way3"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:"way4"}, {nway:{count:5, interval:72}}, {vanish:true}],
+      way4:[{short:"preparation"}, {shotAction:"way5"}, {nway:{count:2, interval:180}}, {vanish:true}],
+      way5:[{short:"preparation"}, {nway:{count:3, interval:120}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 15]}, {shotDirection:["rel", 0]}],
+      deco:[{deco:{shape:"rectSmall", color:"blue"}}]
+    }
+  })
+
+  // 本題
+  // 2, 3, 5のところを素因数列にする。1の場合は直進して消えて終わり。
+  mySystem.addPatternSeed({
+    x:0.5, y:0.4, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"black", bgColor:"plblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"}, {shotAction:"rad1"}, {fire:""}, {wait:300}, {loop:INF, back:"a"}],
+      rad1:[{short:"preparation", diff:90}, {shotAction:"rad2"}, {radial:{count:2}}, {vanish:true}],
+      rad2:[{short:"preparation", diff:60}, {shotAction:"rad3"}, {radial:{count:3}}, {vanish:true}],
+      rad3:[{short:"preparation", diff:36}, {radial:{count:5}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", "$diff"]}],
+      deco:[{deco:{shape:"circleSmall", color:"black"}}]
     }
   })
 
@@ -1479,6 +1546,10 @@ class System{
         .registShape("doubleWedgeMiddle", new DrawDoubleWedgeShape(20))
         .registShape("doubleWedgeLarge", new DrawDoubleWedgeShape(30))
         .registShape("doubleWedgeHuge", new DrawDoubleWedgeShape(60))
+        .registShape("circleSmall", new DrawCircleShape(25))
+        .registShape("circleMiddle", new DrawCircleShape(35))
+        .registShape("circleLarge", new DrawCircleShape(45))
+        .registShape("circleHuge", new DrawCircleShape(80))
         .registShape("laserSmall", new DrawLaserShape(8))
         .registShape("laserMiddle", new DrawLaserShape(16))
         .registShape("laserLarge", new DrawLaserShape(24))
@@ -2206,6 +2277,24 @@ class DrawCherryShape extends DrawShape{
           this.size, this.size, 45 + 72 * i + direction, 315 + 72 * i + direction);
     }
     unit.drawParam.rotationAngle += unit.drawParam.rotationSpeed;
+  }
+}
+
+// 単純に円を描画するのがあってもいいよね。
+// 弾丸用。
+class DrawCircleShape extends DrawShape{
+  constructor(size){
+    super();
+    this.colliderType = "circle";
+    this.size = size; // 25, 35, 45, 80. 中に数字を書き込む関係で。textSize:20を想定。
+    this.damage = size * 0.2;
+  }
+  set(unit){
+    unit.collider.update(unit.position.x, unit.position.y, this.size);
+  }
+  draw(unit){
+    const {x, y} = unit.position;
+    circle(x, y, this.size);
   }
 }
 
@@ -3139,15 +3228,6 @@ function interpretCommand(data, command, index){
     return result;
   }
   // shotAction. 発射する弾丸の挙動を指定する。
-  /*
-  if(_type === "shotAction"){
-    result.mode = command[_type][0];
-    if(result.mode === "set"){
-      result.shotAction = data.action[command[_type][1]];
-    }
-    return result;
-  }
-  */
   if(_type === "shotAction"){
     result.shotAction = data.action[command.shotAction];
     return result;
