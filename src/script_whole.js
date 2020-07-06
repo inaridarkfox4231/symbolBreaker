@@ -13,6 +13,14 @@
 // Particleは10個くらいの四角形（中身すっからかん）を色付けてふちだけのやつ回転しながら
 // ランダムで方向決めてスピードは4から0に減らす感じでゆっくりとばすみたいな。
 
+// 課題1: コンフィグの改良と過去のパターンの移植
+// まああの、結局パネルだと分かりづらいので、
+// サムネを切り取ってまとめてダウンロードして貼り付けて
+// それをクリックしてアクティブにしてそのパターンができる・・・まあいいか。
+// bulletBurstの方のいろんなパターンを移植したいのよね。FALさんコレクションとか。
+
+// それよりUIを使ってseedを組み立てられるようにするとかそういうのを考えたいわね。→manualに書けって話
+
 "use strict";
 
 const INF = Infinity; // 長いので
@@ -115,6 +123,7 @@ function setup(){
 
   mySystem.createPlayer(weaponData);
 
+  // ドル記法の実験（かもしれない）
   mySystem.addPatternSeed({
     x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
     action:{
@@ -285,8 +294,82 @@ function setup(){
     }
   })
 
+  // もっとも単純な形。中央にノードユニットが鎮座しているだけ。ほんとうに、何もしない。
+  mySystem.addPatternSeed({x:0.5, y:0.5, action:{main:[]}})
+
+  // shotActionとnwayの基本的な使い方
+  mySystem.addPatternSeed({
+    x:0.5, y:0.2, shotSpeed:5, shotDirection:90,
+    action:{
+      main:[{shotAction:["set", "burst"]}, {fire:""}],
+      burst:[{wait:30}, {nway:{count:5, interval:72, action:"way5"}}, {vanish:true}],
+      way5:[{nway:{count:5, interval:10}}]
+    }
+  })
+
+  // 5, 4, 3, 2. (radial)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {radial:{count:5}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {radial:{count:4}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {radial:{count:3}}, {vanish:true}],
+      way2:[{short:"preparation"}, {radial:{count:2}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
+      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+    }
+  })
+
+  // 5, 4, 3, 2. (nway)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {nway:{count:5, interval:72}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {nway:{count:4, interval:90}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way2:[{short:"preparation"}, {nway:{count:2, interval:180}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 1, 30]}, {shotDirection:["rel", 0]}],
+      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+    }
+  })
+
+  // 2, 3, 5, 7. (radial)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {radial:{count:2}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {radial:{count:3}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {radial:{count:5}}, {vanish:true}],
+      way2:[{short:"preparation"}, {radial:{count:7}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
+      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+    }
+  })
+
+  // 2, 3, 5, 7. (nway)
+  mySystem.addPatternSeed({
+    x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY, shape:"starLarge", color:"dkblue",
+    action:{
+      main:[{short:"deco"}, {catch:"a"},{shotAction:["set", "way4"]}, {nway:{count:2, interval:180}}, {wait:300}, {loop:INF, back:"a"}],
+      way4:[{short:"preparation"}, {shotAction:["set", "way3"]}, {nway:{count:3, interval:120}}, {vanish:true}],
+      way3:[{short:"preparation"}, {shotAction:["set", "way2"]}, {nway:{count:5, interval:72}}, {vanish:true}],
+      way2:[{short:"preparation"}, {nway:{count:7, interval:51.4}}, {vanish:true}]
+    },
+    short:{
+      preparation:[{short:"deco"}, {speed:["set", 0.1, 30]}, {shotDirection:["rel", 0]}],
+      deco:[{shotShape:"rectSmall"}, {shotColor:"black"}]
+    }
+  })
+
 // 久しぶり過ぎていろいろ忘れてるのでなんか書きたいよね・・
 // ていうかいったんまとめたい（行数長くていいから）
+// てかfireDefやめたんだっけ。そこら辺思い出せないと無理。
 
 /*
 
@@ -1096,8 +1179,8 @@ function createSystem(w, h, unitCapacity){
   // オブジェクトプール
   window["unitPool"] = new ObjectPool(() => { return new Unit(); }, unitCapacity);
   // デフォルトクラス
-  window["IDLE_COMMAND"] = new IdleCommand();
-  window["THROUGH_COMMAND"] = new ThroughCommand();
+  //window["IDLE_COMMAND"] = new IdleCommand();
+  //window["THROUGH_COMMAND"] = new ThroughCommand();
   return _system;
 }
 
@@ -1149,13 +1232,13 @@ class System{
     if(seed.hasOwnProperty("bgColor")){
       this.backgroundColor = this.drawColor[seed.bgColor];
     }else{
-      this.backgroundColor = color(220, 220, 255);
+      this.backgroundColor = color(220, 220, 255); // 背景色のデフォルト
     }
     // 情報表示の色
     if(seed.hasOwnProperty("infoColor")){
       this.infoColor = color(seed.infoColor.r, seed.infoColor.g, seed.infoColor.b);
     }else{
-      this.infoColor = color(0);
+      this.infoColor = color(0); // 情報の文字色のデフォルト
     }
     this.patternIndex = newPatternIndex;
     this.initialize();
@@ -2806,7 +2889,7 @@ function parsePatternSeed(seed){
   }
 
   // まずnway, line, radialがあればなんとかする（増やすかも）
-  // actionをキー配列の下から見ていって適宜シード列で置き換える感じ。下から出ないと失敗する。
+  // actionをキー配列の下から見ていって適宜シード列で置き換える感じ。下からでないと失敗する。
   // それが終わったら、loopとsignal(そのうちjumpやswitchも作りたい・・)に出てくるbackの文字列を
   // どのくらい戻るかの整数で置き換える。というわけでもう-1記法は使わない。
   let preData = {};
@@ -3015,120 +3098,6 @@ function createAction(data, targetAction){
 // クラス内のexecuteを実行させるように書き換える（とりあえず過渡として一旦executeは残してそれから無くす流れ。）
 
 // ---------------------------------------------------------------------------------------- //
-// Command.
-// 要らない気がしてきた・・や、要るんだけど・・んー。
-
-class IdleCommand{
-  constructor(){}
-  execute(unit){ return false; }
-}
-
-class ThroughCommand{
-  constructor(){}
-  execute(unit){
-    unit.actionIndex++;
-    return true;
-  }
-}
-
-// けっこうややこしい
-// stringでもnumberでもその値をセットするだけならそのまま適用できる。
-// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
-class SetCommand{
-  constructor(propName, value, span = -1){
-    if(this.span < 0){
-      this.func = (unit) => {
-        unit[propName] = value;
-        unit.actionIndex++;
-        return true;
-      }
-    }else{ // span > 0のときは時間をかけて変化させる
-      this.func = (unit) => {
-        const cc = unit.counter.getLoopCount();
-        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
-        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
-        return false;
-      }
-    }
-  }
-  execute(unit){
-    return this.func(unit); // trueのときとfalseのときがあるので。
-  }
-}
-
-// ランダム指定は別に作った方がいい。
-// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
-class RandomSetCommand{
-  constructor(propName, value1, value2){
-    this.func = (unit) => {
-      unit[propName] = value1 + Math.random() * (value2 - value1);
-    }
-  }
-  execute(unit){
-    this.func(unit);
-    unit.actionIndex++;
-    return true;
-  }
-}
-
-// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
-// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
-// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
-class CustomSetCommand{
-  constructor(propName, param){
-    switch(propName){
-      case "direction":
-        switch(param.type){
-          case "aim":
-            this.func = (unit) => { unit.direction = getPlayerDirection(unit.position, param.margin); }
-            break;
-          case "fromParent":
-            this.func = (unit) => {
-              const {px, py} = unit.parent.position;
-              const {x, y} = unit.position;
-              unit.direction = atan2(y - py, x - px) + param.diff;
-            }
-            break;
-        }
-        break;
-      case "shotDirection":
-        switch(param.type){
-          case "aim":
-            this.func = (unit) => { unit.shotDirection = getPlayerDirection(unit.position, param.margin); }
-            break;
-          case "rel":
-            this.func = (unit) => { unit.shotDirection = unit.direction + param.diff; }
-            break;
-          case "fromParent":
-            this.func = (unit) => {
-              const {px, py} = unit.parent.position;
-              const {x, y} = unit.position;
-              unit.shotDirection = atan2(y - py, x - px) + param.diff;
-            }
-            break;
-        }
-        break;
-    }
-  }
-  execute(unit){ this.func(unit); unit.actionIndex++; return true; }
-}
-
-
-class FireCommand{
-  constructor(){
-  }
-  execute(unit){ executeFire(unit); unit.actionIndex++; return true; }
-}
-
-// boolean用
-class FlagSetCommand{
-  constructor(propName, flag){
-    this.func = (unit) => { unit[propName] = flag; unit.actionIndex++; return true; }
-  }
-  execute(unit){ this.func(unit); }
-}
-
-// ---------------------------------------- //
 
 // これがreturnするのがクラスになればいいのね。
 // ここでreturnされるのがクラスになって、executeのところについては、
