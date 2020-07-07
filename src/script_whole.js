@@ -1342,6 +1342,7 @@ class System{
     return this; // こういうのはメソッドチェーンで書くといい
   }
   registShape(name, _shape){
+    _shape.name = name; // 名前付けようね。
     this.drawShape[name] = _shape;
     return this; // メソッドチェーン
   }
