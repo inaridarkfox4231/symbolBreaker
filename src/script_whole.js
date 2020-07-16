@@ -1790,7 +1790,6 @@ class Unit{
     this.shotColor = BLUE;
     this.drawParam = {}; // 描画用付加データは毎回初期化する
     // その他の挙動を制御する固有のプロパティ
-    this.properFrameCount = 0;
     this.vanish = false; // trueなら、消す。
     this.hide = false; // 隠したいとき // appearでも作る？disappearとか。それも面白そうね。ステルス？・・・
     // 衝突判定関連
@@ -1952,8 +1951,6 @@ class Unit{
         if(this.actionIndex === this.action.length){ break; }
       }
     }
-    // カウントの進行
-    this.properFrameCount++;
   }
   draw(){
     if(this.hide || this.vanish){ return; } // hide === trueのとき描画しない
