@@ -437,6 +437,18 @@ function setup(){
     }
   })
 
+// 回転砲台にならないね。おかしいな・・・
+// nwayでアレンジしたけど大して面白くないね。
+mySystem.addPatternSeed({
+  x:0.5, y:0.5, shotSpeed:6, shotDirection:90, collisionFlag:ENEMY,
+  action:{
+    main:[{shotShape:"rectSmall"}, {shotAction:"rad5"}, {catch:"a"}, {shotDirection:["add", 12]}, {radial:{count:5}},
+          {wait:5}, {loop:INF, back:"a"}],
+    rad5:[{shotShape:"rectSmall"}, {shotSpeed:["set", 6]}, {shotDirection:["rel", 0]}, {speed:["set", 0.1, 30]},
+          {nway:{count:4, interval:10}}, {vanish:true}]
+  }
+})
+
 // 久しぶり過ぎていろいろ忘れてるのでなんか書きたいよね・・
 // ていうかいったんまとめたい（行数長くていいから）
 // てかfireDefやめたんだっけ。そこら辺思い出せないと無理。
