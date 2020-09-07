@@ -1,0 +1,507 @@
+マニュアルまとめないと・・・・←まとめろよ（2020/07/01）
+
+bind:親がどうのこうの。
+デフォルト値：false.
+コマンドでtrueにする。trueだと親のvanishFlagがtrueになった場合action実行直前のタイミングで自身の
+vanishFlagがtrueになりそのメソッドを抜ける。つまり死ぬ。
+
+circularBehavior:
+  撃ちだしたユニットの周りを距離を一定に保ちながら周回、あるいはその距離を広げていく感じ。
+ellipserBehavior: 楕円バージョン？？
+半径が小さくなったり大きくなったりするのもやろうと思えばできるのかな
+
+HPとダメージ・・？
+取り敢えず全部1とか5にしてみたら？いきなりわかるわけないでしょ・・
+
+collisionFlagまとめ。
+プレイヤーはPLAYER, 発射する弾丸はPLAYER_BULLET, それが分裂した後も全部PLAYER_BULLET.
+ノードユニットは、未指定の場合collisionFlag:OFFでshotCollisionFlag:ENEMY.
+collisionFlagのみ指定されているならそれが何であってもcollisionFlag:ENEMYでshotCollisionFlag:ENEMY_BULLET.
+どちらも指定されているならそれに従う。
+なお、shotCollisionFlagのデフォルトは常にENEMY_BULLETで変えるにはコマンドが必要。
+たとえば普通にENEMYをだせばそのときデフォルトでshotCollisionFlag=ENEMY_BULLETになるから特に指示は必要ない。
+ENEMYがENEMYを出すような特殊な場合には指定が必要で、その結果はcreateFireで作られる関数内で参照される。以上。
+
+なんか単純にぐりぐりぐりって並べるとかそういうの欲しくない？シンプル組み合わせて複雑作りたいよね。
+単純に数かそれとも配列かってのはパースの時点でなんとかしたいよね。
+
+{s_direction:"aim", margin:0}
+{s_shotDirection:90},
+{a_shotDirection:5},
+{s_speed:30}
+{follow:true}
+{s_direction:"fromParent", margin:10} marginのデフォルトは0
+{s_parallel:{x:30, y:40}, span:60, easing:1} 60フレームかけてxを30にyを40にするとか。easing1だからぎゅーんゆっくり
+{s_parallel:{speed:1, direction:90}, span:60} 60フレームかけてspeedを1にしてdirectionを90にするとか。
+{a_parallel:{speed:1, direction:4}} speedに1を足してdirectionに4を足すとかそういう感じの。
+{a_parallel:{x:100, y:100}}でベクトル(100, 100)に従って平行移動？spanがあったらたとえば60フレームかけるとか。
+{s_action:"fire2"}とか{s_action:"enemy5"}とか{s_action:"afterRaid"}とか{c_action:""}みたいな。
+{a_behavior:"circ"}とか{c_behavior:""}とか。
+{vanish:""} これで。vanishがあるってだけで消えなさいの意味にしたい。{fire:""}って書くでしょ？
+{signal:"reflect"}とか。
+{signal:"crawl"}で壁に沿って進む。距離が長い方に。??
+
+fireは要するに何が配置されるかを指定するんだよー
+それらの速さ、方向、ショットの速さ、ショットの方向、etc...
+
+本物のマニュアルを作るー
+
+1. seedはどんなふうに書くの？
+まず、xとyを指定、これはノードユニット（一番最初に一つだけ配置するユニット）の位置を定めている、割合で。
+たとえば中心だったら0.5, 0.5みたいにして定める。
+プレイヤーの場合とか定めない場合もあるけど。
+それ以降のinitializeOptionは色々あって、全部書くとこう：
+x, y(既出)
+speed, direction, delay, shotSpeed, shotDirection, shotDelay
+定めてあるものについてその値になる。[x0, x1]でランダム指定。
+color, shotColor, shape, shotShape
+これも定めてあるものについて文字列からひっぱってきて定める感じ。
+behavior, shotBehavior
+配列で["...", "..."]みたく定義する。そこに書いてあるのがそのまま放り込まれるイメージ。
+collisionFlag, shotCollisionFlag
+双方とも未定義の場合：順にOFF, ENEMY（enemyを量産するイメージ）
+collisionFlag:""など、collisionFlagのみ定義されてる場合：順にENEMY, ENEMY_BULLET（ボスのテストなど）
+双方定義されてる場合：そのように。
+
+次にaction部分。
+これはオブジェクトで、かならずmainから始まり、それぞれには配列が入ってる。配列の各成分は略形。あとでオブジェクト、
+というかクラスにしたいんだけど、それにする。
+基本的にあとでオブジェクトをパースして実行形式にする。
+今のところはexecuteののち場合分けして実行させてるけど、最終的にはオブジェクトにしてexecuteを直接実行させたい。
+なお、$での省略記法が使えるよ。それは、fireと・・fireではパラメータの"$count"みたいなのをcount:10とかで実行させるのよ。
+
+fireの内容の定め方・・
+何も指定しない場合、普通に自分の位置にspeed, directionとかそのままで置かれるんだけどそれでさえも、
+発射元のどんな情報がどんなふうに反映されてそのショットが置かれるかっていう難しい問題があったりして。
+
+ここまで複雑にする必要あるんかな・・・・・・・・・・
+もうちょっとシンプルにやりたいわね。
+
+たとえば今decoでやってるところはs_parallelでまとめて出来る感じ。
+s:直接その値に決めちゃう。a:加える・・spanがあるかないかでどっちに飛ばすか決める。
+executeで場合分けしたくない・・
+deco:{color:"black", shape:"wedgeMiddle", speed:4, direction:30}とか？
+s_directionはいろいろ。s_speedもだっけ？（うろ）
+decoとあるときはもうまとめてセットするって意味でいいと思う。s_parallelはspanがあるかどうか・・
+s_parallelでspanがないバージョンがdecoみたいな感じの。
+a_shotDelay:15で15だけshotDelayを増やす。
+s_shotDelay:60で60にする。s_shotDelay:0で0に戻す。
+s_parallelは具体的な数に（固定値に）する場合限定って事で。その、span指定の場合は。easingのデフォルトは0.
+
+Commandの内容を分類してクラスにするときの参考にする。
+mirrorの場合：this.func = {(unit) => { unit.direction = 2 * this.axis * 2 - unit.direction; }} とかいうの。
+aimの場合？this.func = {(unit) => { unit.direction = getPlayerDirection(unit.position, this.margin); }} とかね。
+で、signalは事前に入れちゃう感じで。
+signalは真偽値を与える関数judgeがあって、
+if(this.judge(unit)){ unit.actionIndex++; return true; }else{ return false; }
+っていう形になるから、何が言いたいかっていうとexecuteの中身も千差万別、みたいな。funcは実行して終わり、じゃないや。
+進めるかどうかはコマンドの種類による。そこら辺も加味しつつって感じ。
+aimって書いただけでshotDirectionの操作になるのね。
+
+s_hide:trueでhideがtrueになったり、真偽値も加えると相等色々まとめられそうね。
+新しくsetってつくったじゃん。その、xとyを特定値に、っての。こういうことしてる場合じゃないなって。
+mirrorとかaimについてはCustomSetterCommandって形で別立てにします。そういうのがない場合だけってことで。
+{s_speed:4, span:40} 40フレームで4にするー
+{direction:"aim", margin:10}とか。文字列で設定するのって・・んー。
+
+
+----------------支離滅裂になる前に----------------
+speed
+{s_speed:4} speedを4にする
+{a_speed:1} speedに1を足す
+{s_speed:8, span:60} 60フレームかけてspeedを8にする
+{a_speed:4, span:30} 30フレームかけてspeedに4加える
+direction
+{s_direction:90} directionを90にする
+{a_direction:20} directionに20を足す
+{s_direction:90, span:60} directionを60フレームかけて90にする
+{a_direction:30, span:30} directionに30フレームかけて30足す
+shotSpeed
+{s_shotSpeed:2} shotSpeedを2にする。んー・・
+
+この3つでほぼ全部表現できる。
+{set:[{propName:定める値}, span（あれば）]} この{}のところに複数定義すればまとめて変化させることもできそうな。
+キーから配列を作ってクラスのインスタンスのメンバにして各々実行させる感じ。
+easingはxとyのときに・・んー。オブジェクトかなぁ。
+定める値はランダムに指定可能。配列で。
+{set:{prop:{speed:[3, 6], direction:[0, 360]}}} みたいな？
+spanとeasing以外出てこないんなら普通に書けばいいのでは？
+{set:{speed:[3, 6], direction:[0, 360]}}
+{set:{speed:4, span:90}}
+{set:{speed:1, direction:90, span:60}}とかそういう。
+{speed:["set", 1, 60]} → {set:{speed:1, span:60}} ですね。
+{speed:["set", 4]}, {direction:["set", 90]} → {set:{speed:4, direction:90}} こんな感じ。
+{s_speed:4, s_direction:90}でもいい。
+{shotColor:"...."}とかはそのままでいいんじゃない？？
+
+class ShotColorChangeCommand{
+  constructor(){
+    この中でentityのdrawColorから目的の物を引っ張り出す
+  }
+}
+class ShotShapeChangeCommand{ 以下略 }
+class BackgroundColorChangeCommand{ 以下略 }
+
+つまり{}の中のキーでspanとeasing以外のを放り込む感じ？
+たとえば敵の動きとかに使えそうな。
+{add:[{propName:定める値}, span（あれば）]}
+{style:[propName(color, shotColor, shape, shotShapeのいずれか, 定める値のキーネーム)]}
+
+だから、それ以外を定義すればいいんじゃないかと。
+{direction:[....]} {shotDirection:[....]} を別に作る。
+{signal:"vanish"} → {signal:{vanish:""}}
+{signal:"vanish", follow:true} → {signal:{vanish:"follow"}} って感じの。
+{signal:"approach"} → {signal:{approach:5}} factor. playerのsizeの5倍で、的な。
+signalって重複とかできたら・・複数の条件を同時に満たさないと進めないとか。
+進む代わりに戻るのはどうやるんだろうとか思ったりして。戻るならいろいろ戻さないと、ああそうだ、
+戻る場所を具体的に指定するやつ作りたい・・
+そこは{signal:"vanish"}とか普通でいいと思う、よ。
+{direction:"aim", margin:5}とかしよう。うーん・・
+あれ、HPが一定以下とかそういうの、親が消えた後っていうのも親に位置を依存してるとかでなければそういうのもありかなって。
+{bind:true}のあとrel:trueとすると相手の親が自分になって相互参照になる、
+たとえば2匹いて、それぞれ攻撃パターンがあってお互いがやられるとどっちがやられても次のパターンに移行しようっていう時、
+backで戻るようにしないとってのはあるよね。
+{jump:[2, 4, 9]} 2つか4つか9つカウントを進めてtrueで継続。これで攻撃パターンのシャッフルができる。
+{jump:"a"}って書いて{catch:"a"}って書くとcatchにとぶ、catchは何もせず次に行くやつ。OK?
+パースの時にcatch:"a"がいくつ先かを調べてそれで{jump:10}みたいなのと同じ扱いにするイメージ。
+たとえば{jump:"a"}, {}, {}, {}, {catch:"a"}, {}っていう場合、catch:"a"の次がjump:"a"から5つ先だから、
+{jump:"a"}がパースで{jump:5}になるわけね。
+{catch:"b"}, {jump:["c", "d", "e"]},
+{catch:"c"}, {}, {}, {jump:"a"},
+{catch:"d"}, {}, {}, {jump:"a"},
+{catch:"e"}, {}, {}, {jump:"a"},
+{catch:"a"}, {signal:"lowHP", bound:0.3, back:"b"}, {}, {}
+って書くとまずcatch:"b"が無視されて次にcかdかeにランダムで跳んでそれらを実行して
+遷移確率？ああ、たとえば
+[0, 0.5, 0.5,
+0.5, 0, 0.5,
+0.5, 0.5, 0]
+ってやるとどこからでも2分の1の確率で別の状態に行くよね。そういうの作ればいい。で、
+signal:lowHPは現HP < 最大HP * 0.3のときに次に行く感じ。そうでなければback指定があるときは戻るけど無ければ何もしない。
+で、loopのときのあれもback:"a"とか書いて冒頭に・・
+
+class IdleCommand{
+  constructor(){}
+  execute(unit){ return false; }
+}
+class ThroughCommand{
+  constructor(){}
+  execute(unit){ unit.actionIndex++; return false; }
+}
+
+// このふたつは一番最初にconstで作っておいて適宜用いる感じにしよう。たとえば{idle:""}ってあったら
+IDLE_COMMANDでこれが入るイメージ。window[IDLE_COMMAND] = new IdleCommand();
+window[THROUGH_COMMAND] = new ThroughCommand();
+catch:"a"とかはすべてTHROUGH_COMMANDを放り込んでスルーさせる。
+Idleはあれ、親のカウントを進めるやつでunlockして動かすやつで使う感じの。
+
+for example....
+
+mySystem.addPatternSeed({
+  x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
+  action:{
+    main:[{short:"waygun", count:3}, {short:"waygun", count:5},
+          {short:"waygun", count:7}, {short:"waygun", count:9},
+          {wait:16}, {loop:INF, back:-1}]
+  },
+  short:{waygun:[{fire:"waygun", count:"$count"}, {wait:4}, {shotDirection:["add", 5]}]},
+  fireDef:{waygun:{nway:{count:"$count", interval:20}}}
+})
+
+  x:0.5, y:0.3, shotSpeed:4, shotDirection:90, collisionFlag:ENEMY,
+  action:{
+    main:[{catch:"a"}, {short:"waygun", count:3}, {short:"waygun", count:5}, {short:"waygun", count:7},
+          {short:"waygun", count:9}, {wait:16}, {loop:INF, back:"a"}]
+  },
+  short:{waygun:[{fire:"waygun", count:"$count"}, {wait:4}, {a_shotDirection:5}]},
+  fireDef:{waygun:{nway:{count:"$count", interval:20}}}
+って感じ（ほぼいっしょやん）。
+
+class CustomDirectionCommand{
+  directionやshotDirectionをaimにするとかそういうの。shotDirectionをdirection＋～～にするとかmirrorするとか。
+  constructor(){}
+  execute(){}
+}
+
+bind:trueはs_bind:trueって書く、ほぼ一緒みたいな。s_follow:trueとかs_collisionFlag:OFFとか
+s_shotCollisionFlag:ENEMY_BULLET とか。汎用性高い。
+a_behavior:"circ"とかs_action:"afterRaid"とかそういうの
+BehaviorControlCommand
+ShotActionChangeCommand
+
+{deco:{speed:0, color:"grey", shape:"squareMiddle"}} →
+{s_shotSpeed:0}, {s_shotColor:"grey"}, {s_shotShape:"squareMiddle"}
+大して変わんないからこれでいいや、deco要らないです。
+
+{s_par:{x:100, y:200}, span:60, easing:id??}
+
+decoはきちんと定義して, んーじゃあ全部スネークにしないといけないじゃん。
+次作るときは全部プロパティ名スネークにしよ・・・
+shot_speedとか。
+
+苦し紛れ
+const _DICT = {speed:"shotSpeed", color:"shotColor",
+                  shape:"shotShape", direction:"shotDirection", delay:"shotDelay"} etc...
+
+class DecorateCommand{
+  constructor(param){
+    this.funcArray = [];
+    Object.keys(param).forEach((key) => {
+      this.funcArray.push((unit) => { unit[_DICT[key]] = param[key]; });
+    })
+    this.funcArray.push((unit) => { unit[_DICT["speed"]] = param["speed"]; })とか
+  }
+  execute(unit){
+    this.funcArray.forEach((f) => {f(unit);})
+    return true;
+  }
+}
+
+結局いくつ作るの？？
+SetCommand
+AddCommand
+IdleCommand
+ThroughCommand
+CustomDirectionCommand
+DecorateCommand
+FireCommand
+MoveCommand
+SignalCommand
+WaitCommand
+LoopCommand
+
+たとえばnwayについて考えてみる。
+20°間隔で8発の場合、まず、20x7=140を2で割って70引いてそれ。
+
+{s_shotDirection:-(20 x 7) / 2} {fire:""} {a_shotDirection:20} {fire:""} {loop:8-1, back:2}
+
+これね。fireのところにあれするとnwayになると。で・・
+あれきちんと読むと、「セットするパターンのshotDirection部分を90°ずつ増やしている」
+分かったこと：全然きちんと読めてない。
+セットするパターンか・・それは考えなかった、けどセットするアクションがあるならパターンもあるよねぇ。
+パターン、つまりその、初期化に使う情報の事だけど。あーーーそうか・・
+もう全部書き直すしかないんじゃ（（
+そこら辺がきちんと解釈できてなかったからfireのところがあんなわけわからんくなったんよね。つまり。
+パターン。たとえばshotSpeedがいくつであっても自分のスピードには無関係、そこら辺の、・・ショットの情報全体みたいな。
+
+fireの中身とかsetPatternが煩雑過ぎるのが重くなってる原因だと思う・・
+
+今setPatternざっと見たけど、感想：behaviorがウザい。これ邪魔。何とかならないの・・
+ていうか今もうcircular以外使ってないじゃんこれ。
+circularが発動しているときgoBehaviorは死んでるので、これもう差し替えでいいと思う。
+
+shotPatternというのを用意してshotSpeedとかそういうのは全部ここにまとめちゃって、
+で、セットするときはもうそれでそのまま放り込む感じで。
+
+nwayのあれはshotDirectionを統一すれば問題ない。毎フレームの反復処理・・間でやる。あれを別に用意する感じみたいな。
+たとえばradial_gunでやってるのはあれは、放つ間の所で
+shotPatternの中のshotDirectionに対して(shotPatternの中のshotPatternに対する操作)
+{a_shotDirecion:90}してるのよね。で、全部サーキュラムーヴ。
+shotDistanceをいじると発射位置が離れる。それとnwayを組み合わせることで離れた場所に円弧に等間隔で並ぶ。
+shotPatternではなくてpatternにして、patternの中のshotDirectionをいじる感じにする。
+patternはfireのときに参照される情報みたいな意味合い。
+
+speed direction delay move action color shape 7つですべて、のはず。
+あ、あとcollisionFlag. 8つかな・・これでshotPatternの中身すべて。
+fireするときはこれを全部放り込んでbulletを作る・・場合によってはenemyを作る。？shotのshotPatternは基本的に複製。
+
+ってやるともうわけわからんよね。
+nwayのnwayとかどうするのかみたいな。
+nwayやradialはひとつのactionみたいな感じ。commandの配列。それが・・
+で、loopもあれ、catchで表現しないといけないし・・はぅぅつらい。
+
+shotDistanceのデフォは0で、だから普通にfireすると自分の位置にbulletやenemyが出現する。
+たとえばdistanceが60ならshotDirectionの方向に60フレームいったところに出現する感じね。
+その弾丸にセットされるshotSpeedやshotDirectionは
+
+
+unitのプロパティ、パターンで決めるものと初期設定だけして後でいじるものと区別しないと支離滅裂になるね。
+いいんだよ別に。パターンのshotDirectionいじったって。
+
+shotMoveは基本GOだしいじるときは自分で決めるからいいよね。
+shotCollisionFlagはENEMYやOFFになる場合は自分でいじるから事前に決める必要ないよね。
+shotDelayも事前に決めておくものじゃないでしょ。0デフォにしてあとでいじるよ。
+shotShapeとshotColorも事前に決めておくものじゃないかな・・あとでいいんじゃない。とりあえずデフォ放り込んでおいて。
+ノードの場合はっていうけどそこだけでしょ。一般性を考えるとそれはないかなって。
+だからノードの場合にshotColorとかいじりたいときは中でやってね・・
+
+s_shotColor:"red"とかs_shotColor:"blue"の他にs_shotColor:"self"で複製できるようにしようね。
+s_shotShape:"self"にすると同じものが入る。
+
+unit.shotDirectionは発射する方向。位置を決めるための情報。
+unit.ptn.directionは発射した弾丸や敵の初期の移動方向。これらは違う概念なのです。
+これを区別するようにすればbendは必要ないね・・
+ptnのptn??
+bend要らないってのは正しいよ。だって撃ちだした後で90°曲げればいいんでしょ・・
+そもそもbendってインチキコードでサーキュラー作るとき苦し紛れに導入した奴だから
+サーキュラー完成した今となっては用済み、廃止していいと思う。bend廃止。
+
+formationのfrontVerticalでもいいけどnwayの方がいいかもかな・・敵作るときは使うけど。
+nwayにしてshotにdirectionを90にしてもらうだけでいいと思う。
+shotshotDirectionだと語呂が悪いからshotAimにしてshotAimがshotのshotDirectionに設定されるとかそういう。
+で、shotのshotSpeedはspeedといっしょで。
+shotAimはパターン設定の際はshotDirectionを初期設定とする。で、変えたいときは適宜。
+
+createFirePatternは最終的に廃止する。
+
+shotAimでaim使ってプレイヤーの方向を定めたうえで発射すればショットのshotDirectionはそれになるから
+撃ちだした後その方向に一斉にバーストできるよ・・もっともあれ実現するための無理やり感はあるけど。
+あとshotの撃ちだし方向を90ずついじるってのもradialにaction挟むやつで実現できる。
+a_shotAimみたいな書き方になりそうな。
+
+
+
+createFirePatternを廃止して、fire命令ではdistanceに従ってなんかひとつ作るだけにする。
+置く位置はshotDirection方向にunitの位置からdistanceだけ離れた所。で、createUnit(ptn)する。
+
+たとえばnwayは然るべきactionを・・コマンドアレーはどっかに放り込む・・んー。short使って・・
+未指定の場合は何もしないけど。一部。一部だけ、その配列で置き換える。配列操作関数で。
+short:{nway:[{}, {}, {}, {}, {}, {}]}
+addPatternSeedのときにsetCommonShortcutってやってそこで定義する感じ・・
+
+distanceはデフォ0でいじるときはいじる感じ
+createBulletがスムーズになるからやっぱptn必要かな・・って。
+
+nway. count:n, interval:itv
+{a_shotDirection:-(n - 1) * itv / 2} {catch:"nw1"}, {fire:""} {なんか} {a_shotDirection:itv} {loop:n, back:"nw1"}
+{a_shotDirection:-(n + 1) * itv / 2}
+
+[new AddCommand("shotDirection", -(n-1)*itv/2), IDLE_COMMAND, FireCommand(), なんか,
+new AddCommand("shotDirection", itv), new loopCommand(n, 数), new AddCommand("shotDirection", -(n+1)*itv/2)]
+って感じですかね。
+
+{nway:{count:n, interval:itv, action:{}{}{}}} ってあったらここをそれでいじる感じ。
+actionにwaitが入って無ければ一斉に発射されるし、入ってれば順繰りに発射されるし、shotDelayが増加する感じなら
+並べてから順繰りに発射されるしって感じね。
+
+radial. count:n
+{catch:"rad1"} {fire:""} {なんか} {a_shotDirection:360/n} {loop:n, back:"rad1"}
+指定するとき
+{radial:{count:n, action:{}{}}}
+actionでshotAimを90ずつ増やすとかそういう・・まあwaitしても。
+そうか、waitで順繰りに発射するのもradialの一形態として処理できるの大きいかもな・・
+
+line. count:n, upSpeed:us
+{catch:"ln1"} {fire:""} {なんか} {a_shotSpeed:us} {loop:n, back:"ln1"}
+指定するとき
+{line:{count:n, upSpeed:us, action:{}{}{}}}
+
+catchに使うタグは予めグローバルで作っておいてリセットの度にリセットする感じで。
+
+actionのところは今まで通り下に配列で[{}{}]みたいにするといいかも。
+
+スタバからアクセスするテスト完了。ついでにコミットしてみる。
+できた
+
+こういうの実装する場合catch無いとだめだね・・「なんか」の長さが分からないから。
+
+backの値書き換えちゃうのまずいね。
+backあるやつは代わりにassignで。。
+
+// 案
+// ---------------------------------------------------------------------------------------- //
+// Command.
+// 要らない気がしてきた・・や、要るんだけど・・んー。
+
+class IdleCommand{
+  constructor(){}
+  execute(unit){ return false; }
+}
+
+class ThroughCommand{
+  constructor(){}
+  execute(unit){
+    unit.actionIndex++;
+    return true;
+  }
+}
+
+// けっこうややこしい
+// stringでもnumberでもその値をセットするだけならそのまま適用できる。
+// shotActionでもdataからactionの配列を引っ張ってきてそれを当てはめるだけでOK. 汎用性高い。
+class SetCommand{
+  constructor(propName, value, span = -1){
+    if(this.span < 0){
+      this.func = (unit) => {
+        unit[propName] = value;
+        unit.actionIndex++;
+        return true;
+      }
+    }else{ // span > 0のときは時間をかけて変化させる
+      this.func = (unit) => {
+        const cc = unit.counter.getLoopCount();
+        unit[propName] = map(cc + 1, cc, span, unit[propName], value);
+        if(unit.counter.loopCheck(span)){ unit.actionIndex++; }
+        return false;
+      }
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// ランダム指定は別に作った方がいい。
+// param:{propName, value} valueは[3, 9]みたいなやつ。{s_speed:[3, 6]} → param:{propName:"speed", }とか。
+class RandomSetCommand{
+  constructor(propName, value1, value2){
+    this.func = (unit) => {
+      unit[propName] = value1 + Math.random() * (value2 - value1);
+      unit.actionIndex++;
+      return true;
+    }
+  }
+  execute(unit){
+    this.func(unit);
+  }
+}
+
+// directionのaim指定とか複雑な奴はここで。{s_direction:"aim", margin:0}みたいなやつ。
+// aim・・shotDirectionのaimでしょ、directionのaimもあるけど。略記法として残すかどうか。
+// 残す。めんどくさい。ついでにdirectionのaimもhomingって感じで別名用意しようよ。
+class CustomSetCommand{
+
+}
+
+catchはTHROUGHでOK.
+fireもひとつだけでいいんね。
+だから、IDLE_COMMANDとFIRE_COMMANDとTHROUGH_COMMANDが定数化出来る流れ。
+
+class FireCommand{
+  constructor(){
+  }
+  execute(unit){ executeFire(unit); unit.actionIndex++; return true; }
+}
+
+// boolean用
+class FlagSetCommand(){
+  constructor(propName, flag){
+    this.func = (unit) => { unit[propName] = flag; unit.actionIndex++; return true; }
+  }
+  execute(unit){ this.func(unit); }
+}
+???どっちがいいんだろ。
+まあ、パラメタによって・・
+
+actionやcolor, shapeなど、stringをそのまま使わないケースに関しては、_を付けて区別するとか。
+s_action:"_shotFire"みたいな？？なる。で、_で始まらなければそのままセットするのね。
+
+今までいちいちfireFunction作ってたけどもうひつような・・てかもう使ってないじゃん？あ、違うか。
+そうだよ。毎回作ってたんだよ・・
+
+// color, shape用
+class SetStyleCommand{
+  constructor(propName, key){}
+  execute(){}
+}
+
+// action用・・これは渡すときにdata使って配列にしちゃおうね。
+// move用・・これはクラス作って渡す感じだからパラメータ渡しちゃってこっちでやる。多くなったら煩雑になる。
+// signal用・・関数を作る。要は進むか進まないかだけ。
+
+あとjumpとかswitchとかしないといけない。
+
+shortについて改善案
+{short:"template", rt:33, ttt:11, bg:31}みたいに書いてたのを、
+{_template:{rt:33, ttt:11, bg:31}}みたいに書く。
+つまり_で始まるときにshortだよっていう意思表示みたいにするわけ。簡潔に。

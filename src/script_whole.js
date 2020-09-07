@@ -21,6 +21,8 @@
 
 // それよりUIを使ってseedを組み立てられるようにするとかそういうのを考えたいわね。→manualに書けって話
 
+// FALさんの17個を移植する
+
 "use strict";
 
 const INF = Infinity; // 長いので
@@ -153,12 +155,12 @@ function setup(){
   // 新しいcircularの実験中。FALさんの4を書き直し。
   // shotDirectionの初期設定は撃ちだした瞬間の進行方向。
   mySystem.addPatternSeed({
-    x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY,
+    x:0.5, y:0.3, shotSpeed:10, collisionFlag:ENEMY, bgColor:"plgrey", color:"grey",
     action:{
-      main:[{shotAction:"sweeping"}, {radial:{count:2}}],
+      main:[{shotAction:"sweeping"}, {deco:{color:"grey", shape:"rectSmall"}}, {radial:{count:2}}],
       sweeping:[{speed:["set", 0.001, 30]}, {move:"circular", bearing:-3},
                 {bind:true}, {shotDirection:["rel", 0]},
-                {shotSpeed:["set", 2]},
+                {shotSpeed:["set", 2]}, {deco:{color:"black", shape:"rectSmall"}},
                 {catch:"a"}, {fire:""}, {wait:1}, {shotDirection:["add", 12]}, {loop:INF, back:"a"}]
     }
   })
