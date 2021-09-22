@@ -11,6 +11,10 @@
 
 // updateとdraw以外消したいです。
 
+// 2021/09/22
+// laser消えてるね・・
+// ちょっとあっちに持っていきますね。
+
 "use strict";
 
 const INF = Infinity; // 長いので
